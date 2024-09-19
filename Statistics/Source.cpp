@@ -10,6 +10,52 @@
 #include <deque>
 #include <random>
 
+//List of Common Probability Distributions
+//We recently published an article on our website that we thought you might find helpful, particularly if you are studying for an exam.This article can serve as a useful reference tool for a quick consultation.We hope you find it useful.
+//
+//List of Common Probability Distributions
+//
+//Several probability distributions are used in statistics.These include the three most commonly used distributions : the Normal Distribution, the Binomial Distribution, and the Poisson Distribution.
+//
+//Three Most Commonly Used Distributions :
+//
+//1. Normal Distribution : The normal distribution is a continuous probability distribution that is symmetrical around the mean.It is often used to model normally distributed data, such as height or intelligence.The normal distribution is defined by two parameters : the mean(the average value of the data) and the standard deviation, which measures the spread of the data around the mean.
+//
+//2. Binomial Distribution : The binomial distribution is a discrete probability distribution that models the probability of a specific number of successes in a fixed number of independent trials.It is often used to model the probability of success in experiments with a fixed number of trials and two possible outcomes, such as the probability of heads in a series of coin flips.The binomial distribution is defined by the probability of success in each trial and the number of trials.
+//
+//3. Poisson Distribution : The Poisson distribution is a discrete probability distribution that models the probability of a specific number of events occurring in a fixed time interval.It is often used to model the probability of a specific number of occurrences of a rare event, such as the number of accidents at an intersection.The Poisson distribution is defined by a single parameter, the average number of occurrences of the event in the given time interval.
+//
+//
+//
+//Other Distributions :
+//
+//
+//
+//In addition to the three distributions listed above, various other distributions are frequently used under different circumstances.
+//4. Uniform Distribution : The uniform distribution is a continuous probability distribution that is constant over a given range.It is often used to model uniformly distributed data, such as in random number generation.The uniform distribution is defined by two parameters : the lower and upper bounds of the range.
+//
+//5. Bernoulli Distribution : The Bernoulli distribution is used when there are only two possible outcomes, such as a coin flip or a yes / no question.It is also known as the binary distribution and can be used to model the probability of success in a single trial.
+//
+//6. Geometric Distribution : The geometric distribution is a discrete probability distribution that models the number of failures before the first success in a sequence of independent trials.It is often used to model the number of times an event must be tried before success, such as the number of coin flips required to get heads.The geometric distribution is defined by a single parameter : the probability of success in each trial.
+//
+//7. Negative Binomial Distribution : The negative binomial distribution is a discrete probability distribution similar to the binomial distribution.Instead of modelling the number of successes in a fixed number of trials, it models the number of failures before a fixed number of successes.It is often used to model the number of failures before a target number of successes is reached, such as the number of losses before a sports team wins a certain number of games.The negative binomial distribution is defined by two parameters : the probability of success in each trial and the target number of successes.
+//
+//8. Hypergeometric Distribution : Hypergeometric distribution is a discrete probability distribution that models the probability of a specific number of successes in a sample drawn from a finite population without replacement.It is often used to model the probability of a certain number of successes in a sample drawn from a population with a known number of successes and failures, such as the probability of drawing a certain number of red balls from a jar with a known number of red and blue balls.The hypergeometric distribution is defined by three parameters : the population size, the number of successes in the population, and the sample size.
+//
+//9. Exponential Distribution : The exponential distribution is a continuous probability distribution that models the time between events in a Poisson process.It is often used to model the time between occurrences of a rare event, such as the time between failures of a piece of equipment.The exponential distribution is defined by a single parameter : the rate at which events occur.
+//
+//10. Log - Normal Distribution : The log - normal distribution is a continuous probability distribution that is often used to model data that is skewed to the right and has a long tail.It is defined by two parameters : the mean and standard deviation of the underlying normal distribution.
+//
+//11. Weibull Distribution : The Weibull distribution is a continuous probability distribution that is often used to model data with a minimum and maximum value and is either positively or negatively skewed.It is defined by three parameters : the shape parameter, which determines the shape of the distribution; the scale parameter, which determines the location and scale of the distribution; and the threshold parameter, which determines the point at which the distribution starts.The Weibull distribution is often used to model data that represents the time to failure of a system or the time to occurrence of an event.It is also used to model data representing a product's or system's lifetime or lifespan.
+//
+//12. Chi - Square Distribution : The chi - squared distribution is a continuous probability distribution that is often used in hypothesis testing, particularly in tests of goodness of fit, as well as to test the independence of two variables in a contingency table.It is defined by a single parameter : the number of degrees of freedom, which determines the shape of the distribution.
+//
+//13. Student’s t - Distribution : The t - distribution is a continuous probability distribution often used to model normally distributed data but with unknown variance and a small sample size.It is used in hypothesis testing and confidence interval estimation and is defined by a single parameter : the degrees of freedom, which determines the shape of the distribution.The t - distribution has a variety of shapes depending on the number of degrees of freedom, ranging from a symmetric bell - shaped curve when the number of degrees of freedom is large to a skewed distribution when the number of degrees of freedom is small.The t - distribution is also known as the Student's t-distribution, named after William Gosset, who used it to analyze small samples in the early 20th century.
+//
+//14. F - Distribution : The F - distribution is a continuous probability distribution that is often used to compare the variances of two samples.It is used in hypothesis testing and is defined by two parameters : the numerator degrees of freedom and the denominator degrees of freedom, which determine the shape of the distribution.
+//
+//These are just a few examples of other probability distributions that are used in statistics.There are many others, each with its own specific uses and characteristics.
+
 namespace statistics
 {
 	template <typename VecType>
@@ -523,7 +569,23 @@ namespace statistics
 
 		double HypergeometricalDist(size_t successes, size_t failures, size_t trials, size_t desired)
 		{
-			
+			return static_cast<double>(comb(desired, successes) * comb(trials - desired, failures)) / comb(trials, successes + failures);
+		}
+
+		double NegativeBinomialDist(size_t failures, size_t successes, double p)
+		{
+			return static_cast<double>(comb(successes - 1, failures + successes - 1)) * std::pow(p, successes) * std::pow(1.0 - p, failures);
+		}
+
+		double GeometricDist(size_t failures, double p)
+		{
+			return std::pow(1.0 - p, failures) * p;
+		}
+
+		// mu average of population, x desired result
+		double PoissonDist(double mu, unsigned long x)
+		{
+			return std::pow(std::numbers::e, -mu) * std::pow(mu, x) / fact(x);
 		}
 
 	private:
@@ -663,4 +725,8 @@ auto main() -> int
 	//std::cout << statistics::SimpsonsRule(0, 2 * std::numbers::pi, [](double x) {return std::sin(x) * std::sin(x) / (2 * std::numbers::pi); });
 	//std::cout << statistics::random.CalculateNormalDistributionZValue(1.0);
 	//std::cout << statistics::random.CalculateNormalDistributionZValue(0.0);
+	//std::cout << statistics::random.HypergeometricalDist(5, 5, 3, 2);
+	//std::cout << statistics::random.NegativeBinomialDist(3, 2, 0.5);
+	//std::cout << statistics::random.GeometricDist(4, 0.5);
+	//std::cout << statistics::random.PoissonDist(3.6, 7); 
 }
