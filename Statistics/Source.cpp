@@ -561,6 +561,11 @@ namespace statistics
 			return (x - mean) / sigma;
 		}
 
+		double NormalDistributionZValueSample(const double x, const double mean, const double sigma, const size_t sample)
+		{
+			return (x - mean) / (sigma / std::sqrt(sample));
+		}
+
 		double CalculateNormalDistributionZValue(double x)
 		{
 			auto func = [](double x) { return std::pow(std::numbers::e, -std::pow(x, 2) / 2); };
@@ -586,6 +591,130 @@ namespace statistics
 		double PoissonDist(double mu, unsigned long x)
 		{
 			return std::pow(std::numbers::e, -mu) * std::pow(mu, x) / fact(x);
+		}
+
+		double CalculateZScoreWithConfidenceLevel(size_t percentage)
+		{
+			double percentageDivided = (percentage) / 100.0;
+			const auto alpha = (1.0 + percentageDivided) / 2.0;
+			const auto negativeAlpha = 1.0 - alpha;
+			double lowestValue = -3.7;
+			const double pointInterval = 0.01;
+			while (lowestValue <= 3.7)
+			{
+				const auto converted = CalculateNormalDistributionZValue(lowestValue);
+				if (std::abs(converted - negativeAlpha) <= 0.0001) // does not work with epsilon
+				{
+					return lowestValue;
+				}
+				lowestValue += pointInterval;
+			}
+			return 0.0;
+		}
+
+		double tWithDegreesOfFreedom(double t, int df) 
+		{
+			if (t < 0) 
+				return 0.5 * std::tgamma((df + 1) / 2.0) / (std::sqrt(df * std::numbers::pi) * std::tgamma(df / 2.0) * std::pow(1 + (t * t) / df, (df + 1) / 2.0));
+
+			return 1.0 - 0.5 * std::tgamma((df + 1) / 2.0) / (std::sqrt(df * std::numbers::pi) * std::tgamma(df / 2.0) * std::pow(1 + (t * t) / df, (df + 1) / 2.0));
+		}
+
+		double FindTValue(int df, double alpha, bool two_tailed) 
+		{
+			if (two_tailed) 
+			{
+				alpha /= 2.0;
+			}
+
+			double lowerBound = -10.0; 
+			double upperBound = 10.0;
+			double tValue = 0.0;
+
+			while (upperBound - lowerBound > 1e-6) // Do not use numeric_limits
+			{
+				tValue = (lowerBound + upperBound) / 2.0;
+				if (tWithDegreesOfFreedom(tValue, df) < (1.0 - alpha))
+				{
+					lowerBound = tValue;  
+				}
+				else 
+				{
+					upperBound = tValue;  
+				}
+			}
+			return tValue;
+		}
+
+		// Hypothesis test, if it is true, we should reject null hypothesis
+		enum class TailTest {Left, Right, Both};
+		void CheckAlternativeHypothesis(double x, double mean, double stddev, size_t sampleSize, TailTest test)
+		{
+			constexpr auto confidenceLevel = 95;
+			const auto intervals = std::abs(CalculateZScoreWithConfidenceLevel(confidenceLevel)); // slow but it works 
+			if (sampleSize > 30)
+			{
+				const auto z = NormalDistributionZValueSample(x, mean, stddev, sampleSize);
+				if (test == TailTest::Both)
+				{
+					if (std::abs(z) >= intervals)
+					{
+						std::cout << "Null hypothesis should be rejected" << std::endl;
+						return;
+					}
+				}
+				else if (test == TailTest::Left)
+				{
+					if (z < intervals)
+					{
+						std::cout << "Null hypothesis should be rejected" << std::endl;
+						return;
+					}
+				}
+				else if (test == TailTest::Right)
+				{
+					if (z > intervals)
+					{
+						std::cout << "Null hypthesis should be rejected" << std::endl;
+						return;
+					}
+				}
+				std::cout << "Null hypothesis is right!" << std::endl;
+			}
+			else
+			{
+				const auto t = NormalDistributionZValueSample(x, mean, stddev, sampleSize);
+				const auto degreeOfFreedom = sampleSize - 1;
+				const auto significanceLevel = (1.0 - confidenceLevel);
+				const auto criticalT = FindTValue(degreeOfFreedom, significanceLevel, test == TailTest::Both);
+
+				if (test == TailTest::Both)
+				{
+					if (std::abs(t) >= criticalT)
+					{
+						std::cout << "Null hypothesis should be rejected" << std::endl;
+						return;
+					}
+				}
+				else if (test == TailTest::Left)
+				{
+					if (t <= criticalT)
+					{
+						std::cout << "Null hypothesis should be rejected" << std::endl;
+						return;
+					}
+				}
+				else if (test == TailTest::Right)
+				{
+					if (t >= criticalT)
+					{
+						std::cout << "Null hypothesis should be rejected" << std::endl;
+						return;
+					}
+				}
+
+				std::cout << "Null hypothesis is right" << std::endl;
+			}
 		}
 
 	private:
@@ -729,4 +858,10 @@ auto main() -> int
 	//std::cout << statistics::random.NegativeBinomialDist(3, 2, 0.5);
 	//std::cout << statistics::random.GeometricDist(4, 0.5);
 	//std::cout << statistics::random.PoissonDist(3.6, 7); 
+	//std::cout << statistics::random.NormalDistributionZValue(102.5, 100, 5);
+	//std::cout << statistics::random.CalculateNormalDistributionZValue(-1.96);
+	/*std::cout << */
+	//statistics::random.CheckAlternativeHypothesis(78, 80, 2.5, 40);
+	//std::cout << statistics::random.CalculateZScoreWithConfidenceLevel(97);
+	std::cout << statistics::random.FindTValue(10, 0.05, true);
 }
