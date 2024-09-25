@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include <numbers>
 #include <deque>
+#include <numeric>
 #include <random>
 
 //List of Common Probability Distributions
@@ -113,16 +114,23 @@ namespace statistics
 	}
 
 	template <typename VecType>
+	auto sumOfSquares(const VecType& vec)
+	{
+		auto result = 0.0;
+		const auto avg = statistics::avg(vec);
+		for (auto elem{ 0u }; elem < std::size(vec); ++elem)
+			result += static_cast<float>(std::pow(vec[elem] - avg, 2));
+
+		return result;
+	}
+
+	template <typename VecType>
 	auto dev(const VecType& vec, bool isPopulation = true)
 	{
 		const auto size = std::size(vec);
 		if (size > 1)
 		{
-			const auto avg = statistics::avg(vec);
-			auto result{ 0.0f };
-			for (auto elem{ 0u }; elem < size; ++elem)
-				result += static_cast<float>(std::pow(vec[elem] - avg, 2));
-
+			auto result = sumOfSquares(vec);
 			return std::sqrt(result / (isPopulation ? size : (size - 1)));
 		}
 
@@ -508,6 +516,130 @@ namespace statistics
 		return (h / 3) * sum;
 	}
 
+	template <typename VecType>
+	auto CalculateSumOfSquaresWithin(const std::vector<VecType>& samples) // error
+	{
+		double result = 0.0;
+		std::ranges::for_each(samples, [&result](const auto& sample) { result += sumOfSquares(sample); });
+		return result;
+	}
+
+	template <typename VecType>
+	auto CalculateSumOfSquaresBetween(const std::vector<VecType>& samples)
+	{
+		double result = 0.0;
+		std::vector<double> averages;
+		std::ranges::for_each(samples, [&averages](const auto& sample) 
+			{
+				averages.emplace_back(statistics::avg(sample));
+			});
+		const double averageOfAverages = (avg(averages));
+		for (auto sampleIt{ 0u }; sampleIt < std::size(averages); ++sampleIt)
+		{
+			result += std::pow((averages[sampleIt] - averageOfAverages), 2) * std::size(samples[sampleIt]);
+		}
+		
+		return result;
+	}
+
+
+	template <typename VecType>
+	auto SST(const std::vector<VecType>& samples) // Sum of squares total
+	{
+		return CalculateSumOfSquaresBetween(samples) + CalculateSumOfSquaresWithin(samples);
+	}
+
+	template <typename VecType>
+	size_t DegreesOFFreedomBeetwen(const std::vector<VecType>& samples)
+	{
+		return std::size(samples) - 1;
+	}
+
+	template <typename VecType>
+	size_t DegreesOFFreedomWithin(const std::vector<VecType>& samples)
+	{
+		size_t result{ 0u };
+		std::ranges::for_each(samples, [&result](const auto& sample) {result += std::size(sample); });
+		return result - std::size(samples);
+	}
+
+	template <typename VecType>
+	size_t DegreesOFFreedomTotal(const std::vector<VecType>& samples)
+	{
+		size_t result{ 0u };
+		std::ranges::for_each(samples, [&result](const auto& sample) {result += std::size(sample); });
+		return result - 1;
+	}
+
+	template <typename VecType>
+	auto MeanSSBetween(const std::vector<VecType>& samples)
+	{
+		return CalculateSumOfSquaresBetween(samples) / DegreesOFFreedomBeetwen(samples);
+	}
+
+	template <typename VecType>
+	auto MeanSSWithin(const std::vector<VecType>& samples)
+	{
+		return CalculateSumOfSquaresWithin(samples) / DegreesOFFreedomWithin(samples);
+	}
+
+	template <typename VecType>
+	auto CalculateFRationValue(const std::vector<VecType>& samples)
+	{
+		return MeanSSBetween(samples) / MeanSSWithin(samples);
+	}
+
+	double BetaFunction(double x, double y)
+	{
+		return (std::tgamma(x) * std::tgamma(y)) / std::tgamma(x + y);
+	}
+
+	double fCDF(double x, size_t df1, size_t df2)
+	{
+		double num = std::pow(df1 * x, df1) * std::pow(df2, df2);
+		double denom = std::pow(df1 * x + df2, df1 + df2);
+		return num / denom * BetaFunction(df1 / 2.0, df2 / 2.0);
+	}
+
+	double inverseF(double alpha, size_t df1, size_t df2, double epsilon = 1e-6) 
+	{
+		// TODO: NOT GOOD!!!
+		// Simple binary search to find the critical F-value
+		double low = 0.0, high = 10.0, mid;
+		while (high - low > epsilon) 
+		{
+			mid = (low + high) / 2.0;
+			if (fCDF(mid, df1, df2) < alpha) 
+			{
+				low = mid;  // Move the lower bound up
+			}
+			else 
+			{
+				high = mid; // Move the upper bound down
+			}
+		}
+		return mid;
+	}
+
+	template <typename VecType>
+	auto ANOVA(const std::vector<VecType>& samples)
+	{
+		constexpr auto alpha = 0.05f;
+		const auto df1 = DegreesOFFreedomBeetwen(samples);
+		const auto df2 = DegreesOFFreedomWithin(samples);
+		const auto criticalFValue = inverseF(alpha, df1, df2);
+		const auto testFValue = CalculateFRationValue(samples);
+		if (testFValue > criticalFValue)
+		{
+			std::cout << "Reject null hypothesis" << std::endl;
+		}
+		else
+		{
+			std::cout << "Accept null hypothesys" << std::endl;
+		}
+	}
+
+
 	class Random
 	{
 	public:
@@ -556,11 +688,13 @@ namespace statistics
 			return result;
 		}
 
+		// Single sample
 		double NormalDistributionZValue(const double x, const double mean, const double sigma)
 		{
 			return (x - mean) / sigma;
 		}
 
+		// Multiple samples
 		double NormalDistributionZValueSample(const double x, const double mean, const double sigma, const size_t sample)
 		{
 			return (x - mean) / (sigma / std::sqrt(sample));
@@ -591,6 +725,18 @@ namespace statistics
 		double PoissonDist(double mu, unsigned long x)
 		{
 			return std::pow(std::numbers::e, -mu) * std::pow(mu, x) / fact(x);
+		}
+
+		double GetFisherDist(double m, double n)
+		{
+			std::fisher_f_distribution dist(m, n);
+			return dist(engine);
+		}
+
+		double GetChiSquare(double m)
+		{
+			std::chi_squared_distribution<double> dist(m);
+			return dist(engine);
 		}
 
 		double CalculateZScoreWithConfidenceLevel(size_t percentage)
@@ -652,7 +798,7 @@ namespace statistics
 		{
 			constexpr auto confidenceLevel = 95;
 			const auto intervals = std::abs(CalculateZScoreWithConfidenceLevel(confidenceLevel)); // slow but it works 
-			if (sampleSize > 30)
+			if (sampleSize > 30) // we do z test when we know stddev and when sampleSize > 30
 			{
 				const auto z = NormalDistributionZValueSample(x, mean, stddev, sampleSize);
 				if (test == TailTest::Both)
@@ -716,6 +862,32 @@ namespace statistics
 				std::cout << "Null hypothesis is right" << std::endl;
 			}
 		}
+		
+		double FicherFValue(double variance1, double variance2)
+		{
+			return variance1 / variance2;
+		}
+		// Tests for variance or standard deviation
+		// f test and chi square test
+		// F test for two variances from different population
+		// Chi squared is when testing population variance against a 
+		// specified method
+		// Testing goodness of fit of some probability distribution
+
+		double ChiSquaredTestStatistics(size_t n, double variance, double std)
+		{
+			return (n - 1) * variance / std;
+		}
+
+		double CriticalValueForChiSquared([[maybe_unused]]double confidence, [[maybe_unused]] double testStatistics, [[maybe_unused]] size_t degreesOfFreedom)
+		{
+			// look at the table.........
+			return 0.0;
+		}
+
+
+		// Anova used for severals means 
+		// Checking one or more samples has different mean than population
 
 	private:
 		std::random_device device{};
@@ -817,6 +989,10 @@ auto main() -> int
 	}
 
 	std::vector<float> borders{ 20.0f, 22.0f, 30.0f };
+	std::array machine1{ 150, 151, 152, 152, 151, 150 };
+	std::array machine2{ 153, 152, 148, 151, 149, 152 };
+	std::array machine3{ 156, 154, 155, 156, 157, 155 };
+
 	//std::cout << statistics::sum(a, [](int a) {return a % 2 == 0; });
 	//std::cout << statistics::avg(a, [](int a) {return a % 2 == 0; });
 	//std::cout << statistics::mean(a);
@@ -863,5 +1039,10 @@ auto main() -> int
 	/*std::cout << */
 	//statistics::random.CheckAlternativeHypothesis(78, 80, 2.5, 40);
 	//std::cout << statistics::random.CalculateZScoreWithConfidenceLevel(97);
-	std::cout << statistics::random.FindTValue(10, 0.05, true);
+	//std::cout << statistics::random.FindTValue(10, 0.05, true);
+	//std::cout << statistics::CalculateSumOfSquaresWithin(std::vector{ machine1 ,machine2 ,machine3 }) << std::endl; 
+	//std::cout << statistics::CalculateSumOfSquaresBetween(std::vector{ machine1 ,machine2 ,machine3 }) << std::endl;
+	//std::cout << statistics::MeanSSBetween(std::vector{ machine1 ,machine2 ,machine3 });
+	//std::cout << statistics::CalculateFRationValue(std::vector{ machine1 ,machine2 ,machine3 });
+	statistics::ANOVA(std::vector{ machine1 ,machine2 ,machine3 });
 }
