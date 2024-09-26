@@ -9,6 +9,7 @@
 #include <numbers>
 #include <deque>
 #include <numeric>
+#include <map>
 #include <random>
 
 //List of Common Probability Distributions
@@ -639,6 +640,55 @@ namespace statistics
 		}
 	}
 
+	double getCriticalChiSquared(double alpha, int degreesOfFreedom)
+	{
+		std::map<std::pair<int, double>, double> chiSquaredTable = 
+		{
+			{{1, 0.05}, 3.8415}, {{1, 0.01}, 6.6349},
+			{{2, 0.05}, 5.9915}, {{2, 0.01}, 9.2103},
+			{{3, 0.05}, 7.8147}, {{3, 0.01}, 11.3449},
+			{{4, 0.05}, 9.4877}, {{4, 0.01}, 13.2767},
+			{{5, 0.05}, 11.0705}, {{5, 0.01}, 15.0863},
+		};
+
+		auto key = std::make_pair(degreesOfFreedom, alpha);
+		if (chiSquaredTable.find(key) != chiSquaredTable.end()) 
+		{
+			return chiSquaredTable[key];
+		}
+		else
+		{
+			return -1;  // Indicate an error
+		}
+	}
+
+	// testing if sample follow the distribution
+	template <typename VecType>
+	auto CalculatedStatisticsFitTest(const std::vector<VecType>& samplesObserved, const std::vector<VecType>& samplesExpected)
+	{
+		double result = 0.0;
+		for (size_t elem{ 0u }; elem < samplesObserved.size(); ++elem)
+		{
+			result += std::pow(samplesObserved[elem] - samplesExpected[elem], 2.0) / samplesExpected[elem];
+		}
+		return result;
+	}
+
+
+	template <typename VecType>
+	void GoodnessOfFitTest(const std::vector<VecType>& samplesObserved, const std::vector<VecType>& samplesExpected)
+	{
+		const auto calculatedFitTest = CalculatedStatisticsFitTest(samplesObserved, samplesExpected);
+		if (auto criticalValue = getCriticalChiSquared(0.05, std::size(samplesExpected) - 1); calculatedFitTest > criticalValue)
+		{
+			std::cout << "Null hypothesis rejected" << std::endl;
+		}
+		else
+		{
+			std::cout << "Accepted" << std::endl;
+		}
+	}
+
 
 	class Random
 	{
@@ -1044,5 +1094,7 @@ auto main() -> int
 	//std::cout << statistics::CalculateSumOfSquaresBetween(std::vector{ machine1 ,machine2 ,machine3 }) << std::endl;
 	//std::cout << statistics::MeanSSBetween(std::vector{ machine1 ,machine2 ,machine3 });
 	//std::cout << statistics::CalculateFRationValue(std::vector{ machine1 ,machine2 ,machine3 });
-	statistics::ANOVA(std::vector{ machine1 ,machine2 ,machine3 });
+	//statistics::ANOVA(std::vector{ machine1 ,machine2 ,machine3 });
+	//std::cout << statistics::getCriticalChiSquared(0.05, 4);
+	statistics::GoodnessOfFitTest(std::vector{51, 52, 49, 83, 48}, std::vector{ 50, 50, 50, 50, 50 });
 }
