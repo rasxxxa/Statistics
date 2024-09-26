@@ -11,6 +11,8 @@
 #include <numeric>
 #include <map>
 #include <random>
+#include <span>
+#include <string_view>
 #include <iomanip>
 //List of Common Probability Distributions
 //We recently published an article on our website that we thought you might find helpful, particularly if you are studying for an exam.This article can serve as a useful reference tool for a quick consultation.We hope you find it useful.
@@ -92,37 +94,11 @@ public:
 	inline size_t GetRows() const { return matrix.size(); }
 	inline size_t GetColumns() const { return (*matrix.begin()).size(); }
 
-	void PrintMatrix() const
-	{
-		if (matrix.size() > 0 && matrix[0].size() > 0 && !rowName.empty()  && !columnName.empty())
-		{
-			for (size_t i{ 0u }; i < matrix.size(); ++i)
-			{
-				if (i == 0u)
-				{
-					for (size_t j{ 0u }; j < matrix[0].size(); ++j)
-					{
-						std::cout << "\t" << columnName + " " + std::to_string(j) + " ";
-					}
-				}
-				std::cout << std::endl;
-				for (size_t j{ 0u }; j < matrix[0].size(); ++j)
-				{
-					if (j == 0u)
-					{
-						std::cout << rowName << "\t";
-					}
-					std::cout << std::setw(10);
-					std::cout << matrix[i][j];
-				}
-			}
-		}
-	}
-
+	void PrintMatrix() const;
 private:
 	std::vector<VECTOR> matrix;
-	std::string columnName;
-	std::string rowName;
+	std::string columnName = "column";
+	std::string rowName = "row";
 };
 
 namespace statistics
@@ -1024,6 +1000,43 @@ namespace statistics
 
 };
 
+
+void print_break(const std::vector<size_t>& widths)
+{
+	const std::size_t margin = 1;
+	std::cout.put('+').fill('-');
+	for (std::size_t w : widths)
+	{
+		std::cout.width(w + margin * 2);
+		std::cout << '-' << '+';
+	}
+	std::cout.put('\n').fill(' ');
+};
+
+std::vector<size_t> calculate_column_widths(const std::vector<std::vector<std::string>>& table)
+{
+	std::vector<size_t> widths;
+	widths.resize(table.size() + 1);
+
+	for (const auto& row : table)
+		for (size_t i = 0; i != row.size(); ++i)
+			widths[i] = 10;
+	return widths;
+}
+
+template<typename T>
+void print_row(const std::vector<T>& row, const std::vector<size_t>& widths)
+{
+	std::cout << '|';
+	for (size_t i = 0; i != row.size(); ++i)
+	{
+		std::cout << ' ';
+		std::cout.width(widths[i]);
+		std::cout << row[i] << " |";
+	}
+	std::cout << '\n';
+};
+
 //Centralna granicna teorema
 //Za bilo koju populaciju, proseci nasumicnih uzoraka ce imati normalnu raspodelu
 
@@ -1058,114 +1071,6 @@ void Simulation2(size_t sample)
 
 	statistics::DrawCoordinate(x, y);
 
-}
-
-
-auto main() -> int
-{
-	std::vector<int> a{ 12,3,4,5,6,11,12 };
-	std::vector < std::string> c{ "a", "b", "c", "d", "e", "f", "g" };
-	std::vector<float> b{ 
-		21.0f, 
-		21.0f, 
-		22.8f, 
-		21.4f,
-		18.7f,
-		18.1f,
-		14.3f,
-		24.4f,
-		22.8f,
-		19.2f,
-		17.8f,
-		16.4f,
-		17.3f,
-		15.2f,
-		10.4f,
-		10.4f,
-		14.7f,
-		32.4f,
-		30.4f,
-		33.9f,
-		21.5f,
-		15.5f,
-		15.2f,
-		13.3f,
-		19.2f,
-		27.3f, 
-		26.0f,
-		30.4f,
-		15.8f,
-		19.7f,
-		15.0f,
-		21.4f
-	};
-	std::vector<std::string> d;
-	for (const auto& vv : b)
-	{
-		d.push_back(std::to_string(vv));
-	}
-
-	std::vector<float> borders{ 20.0f, 22.0f, 30.0f };
-	std::array machine1{ 150, 151, 152, 152, 151, 150 };
-	std::array machine2{ 153, 152, 148, 151, 149, 152 };
-	std::array machine3{ 156, 154, 155, 156, 157, 155 };
-
-	//std::cout << statistics::sum(a, [](int a) {return a % 2 == 0; });
-	//std::cout << statistics::avg(a, [](int a) {return a % 2 == 0; });
-	//std::cout << statistics::mean(a);
-	//std::cout << statistics::dev(a);
-	//std::cout << statistics::var(a);
-	//std::cout << statistics::range(a);
-	//std::cout << statistics::min(a);
-	//std::cout << statistics::stderror(a);
-	//std::cout << statistics::skew1(b);
-	//std::cout << statistics::skew2(b);
-	//std::cout << statistics::kurtosis1(b);
-	//std::cout << statistics::kurtosis2(b);
-	//statistics::DrawHistogram(b, d);
-	//statistics::DrawBonsHistogram(b, borders);
-	//statistics::DrawCoordinate(std::vector{0, 1, 2, 3, -4}, std::vector{0, 1, 2, 3, -4});
-	//statistics::PrintVec(statistics::CreateBins(b));
-	//std::cout << statistics::fact(0);
-	//std::cout << statistics::perm(4, 10, true);
-	//std::cout << statistics::comb(2, 10);
-	//auto randomDiceSimulation = statistics::GetUniformIntNDistributions(100, 1, 6);
-	//statistics::PrintVec(randomDiceSimulation);
-
-	//Simulation1(10);
-	//Simulation1(100);
-	//Simulation1(1000);
-	//Simulation1(1);
-	//Simulation2(10);
-	//Simulation2(100);
-	//Simulation2(10000);
-	//std::cout << statistics::random.NormalDistributionDensity(0.5f, 1.0f, 0.0f);
-	//std::cout << statistics::random.BinomialDistributionMass(10, 5, 0.5);
-	//std::cout << statistics::random.BinomialDistributionRange(10, 0, 5, 0.5);
-	//std::cout << statistics::TrapezoidalRule(0, 2 * std::numbers::pi, [](double x) {return std::sin(x) * std::sin(x) / (2 * std::numbers::pi); });
-	//std::cout << std::endl;
-	//std::cout << statistics::SimpsonsRule(0, 2 * std::numbers::pi, [](double x) {return std::sin(x) * std::sin(x) / (2 * std::numbers::pi); });
-	//std::cout << statistics::random.CalculateNormalDistributionZValue(1.0);
-	//std::cout << statistics::random.CalculateNormalDistributionZValue(0.0);
-	//std::cout << statistics::random.HypergeometricalDist(5, 5, 3, 2);
-	//std::cout << statistics::random.NegativeBinomialDist(3, 2, 0.5);
-	//std::cout << statistics::random.GeometricDist(4, 0.5);
-	//std::cout << statistics::random.PoissonDist(3.6, 7); 
-	//std::cout << statistics::random.NormalDistributionZValue(102.5, 100, 5);
-	//std::cout << statistics::random.CalculateNormalDistributionZValue(-1.96);
-	/*std::cout << */
-	//statistics::random.CheckAlternativeHypothesis(78, 80, 2.5, 40);
-	//std::cout << statistics::random.CalculateZScoreWithConfidenceLevel(97);
-	//std::cout << statistics::random.FindTValue(10, 0.05, true);
-	//std::cout << statistics::CalculateSumOfSquaresWithin(std::vector{ machine1 ,machine2 ,machine3 }) << std::endl; 
-	//std::cout << statistics::CalculateSumOfSquaresBetween(std::vector{ machine1 ,machine2 ,machine3 }) << std::endl;
-	//std::cout << statistics::MeanSSBetween(std::vector{ machine1 ,machine2 ,machine3 });
-	//std::cout << statistics::CalculateFRationValue(std::vector{ machine1 ,machine2 ,machine3 });
-	//statistics::ANOVA(std::vector{ machine1 ,machine2 ,machine3 });
-	//std::cout << statistics::getCriticalChiSquared(0.05, 4);
-	//statistics::GoodnessOfFitTest(std::vector{51, 52, 49, 83, 48}, std::vector{ 50, 50, 50, 50, 50 });
-	MATRIX m(5, 5, "Students", "Grades");
-	m.PrintMatrix();
 }
 
 template<typename Type>
@@ -1379,4 +1284,169 @@ MATRIX<Type>& MATRIX<Type>::operator+=(double other)
 			matrix[i][j] += other;
 
 	return *this;
+}
+
+template<typename Type>
+void MATRIX<Type>::PrintMatrix() const
+{
+	if (matrix.size() > 0 && matrix[0].size() > 0)
+	{
+		std::vector<std::vector<std::string>> table;
+		table.resize(matrix.size());
+		for (size_t i = 0; i < table.size(); ++i)
+			table[i].resize(matrix[i].size() + 1);
+
+		for (size_t i = 0; i < GetRows(); i++)
+		{
+			for (size_t j = 1; j < GetColumns() + 1; j++)
+			{
+				table[i][j] = std::to_string(matrix[i][j-1]);
+			}
+		}
+
+		for (size_t i = 0; i < GetRows(); ++i)
+		{
+			table[i][0] = rowName + std::to_string(i);
+		}
+
+		auto widths = calculate_column_widths(table);
+		std::cout.setf(std::ios::left, std::ios::adjustfield);
+		print_break(widths);
+		
+		std::vector<std::string> columns;
+		columns.push_back(" ");
+		for (size_t i = 0; i < matrix[0].size(); ++i)
+		{
+			columns.emplace_back(columnName + " " + std::to_string(i));
+		}
+
+		for (size_t i = 0; i < columns.size(); ++i)
+		{
+			widths[i] = std::max(widths[i], columns[i].size());
+		}
+
+		print_row(columns, widths);
+		print_break(widths);
+		for (const auto& row : table)
+			print_row(row, widths);
+		print_break(widths);
+
+	}
+}
+
+
+auto main() -> int
+{
+	std::vector<int> a{ 12,3,4,5,6,11,12 };
+	std::vector < std::string> c{ "a", "b", "c", "d", "e", "f", "g" };
+	std::vector<float> b{
+		21.0f,
+		21.0f,
+		22.8f,
+		21.4f,
+		18.7f,
+		18.1f,
+		14.3f,
+		24.4f,
+		22.8f,
+		19.2f,
+		17.8f,
+		16.4f,
+		17.3f,
+		15.2f,
+		10.4f,
+		10.4f,
+		14.7f,
+		32.4f,
+		30.4f,
+		33.9f,
+		21.5f,
+		15.5f,
+		15.2f,
+		13.3f,
+		19.2f,
+		27.3f,
+		26.0f,
+		30.4f,
+		15.8f,
+		19.7f,
+		15.0f,
+		21.4f
+	};
+	std::vector<std::string> d;
+	for (const auto& vv : b)
+	{
+		d.push_back(std::to_string(vv));
+	}
+
+	std::vector<float> borders{ 20.0f, 22.0f, 30.0f };
+	std::array machine1{ 150, 151, 152, 152, 151, 150 };
+	std::array machine2{ 153, 152, 148, 151, 149, 152 };
+	std::array machine3{ 156, 154, 155, 156, 157, 155 };
+
+	//std::cout << statistics::sum(a, [](int a) {return a % 2 == 0; });
+	//std::cout << statistics::avg(a, [](int a) {return a % 2 == 0; });
+	//std::cout << statistics::mean(a);
+	//std::cout << statistics::dev(a);
+	//std::cout << statistics::var(a);
+	//std::cout << statistics::range(a);
+	//std::cout << statistics::min(a);
+	//std::cout << statistics::stderror(a);
+	//std::cout << statistics::skew1(b);
+	//std::cout << statistics::skew2(b);
+	//std::cout << statistics::kurtosis1(b);
+	//std::cout << statistics::kurtosis2(b);
+	//statistics::DrawHistogram(b, d);
+	//statistics::DrawBonsHistogram(b, borders);
+	//statistics::DrawCoordinate(std::vector{0, 1, 2, 3, -4}, std::vector{0, 1, 2, 3, -4});
+	//statistics::PrintVec(statistics::CreateBins(b));
+	//std::cout << statistics::fact(0);
+	//std::cout << statistics::perm(4, 10, true);
+	//std::cout << statistics::comb(2, 10);
+	//auto randomDiceSimulation = statistics::GetUniformIntNDistributions(100, 1, 6);
+	//statistics::PrintVec(randomDiceSimulation);
+
+	//Simulation1(10);
+	//Simulation1(100);
+	//Simulation1(1000);
+	//Simulation1(1);
+	//Simulation2(10);
+	//Simulation2(100);
+	//Simulation2(10000);
+	//std::cout << statistics::random.NormalDistributionDensity(0.5f, 1.0f, 0.0f);
+	//std::cout << statistics::random.BinomialDistributionMass(10, 5, 0.5);
+	//std::cout << statistics::random.BinomialDistributionRange(10, 0, 5, 0.5);
+	//std::cout << statistics::TrapezoidalRule(0, 2 * std::numbers::pi, [](double x) {return std::sin(x) * std::sin(x) / (2 * std::numbers::pi); });
+	//std::cout << std::endl;
+	//std::cout << statistics::SimpsonsRule(0, 2 * std::numbers::pi, [](double x) {return std::sin(x) * std::sin(x) / (2 * std::numbers::pi); });
+	//std::cout << statistics::random.CalculateNormalDistributionZValue(1.0);
+	//std::cout << statistics::random.CalculateNormalDistributionZValue(0.0);
+	//std::cout << statistics::random.HypergeometricalDist(5, 5, 3, 2);
+	//std::cout << statistics::random.NegativeBinomialDist(3, 2, 0.5);
+	//std::cout << statistics::random.GeometricDist(4, 0.5);
+	//std::cout << statistics::random.PoissonDist(3.6, 7); 
+	//std::cout << statistics::random.NormalDistributionZValue(102.5, 100, 5);
+	//std::cout << statistics::random.CalculateNormalDistributionZValue(-1.96);
+	/*std::cout << */
+	//statistics::random.CheckAlternativeHypothesis(78, 80, 2.5, 40);
+	//std::cout << statistics::random.CalculateZScoreWithConfidenceLevel(97);
+	//std::cout << statistics::random.FindTValue(10, 0.05, true);
+	//std::cout << statistics::CalculateSumOfSquaresWithin(std::vector{ machine1 ,machine2 ,machine3 }) << std::endl; 
+	//std::cout << statistics::CalculateSumOfSquaresBetween(std::vector{ machine1 ,machine2 ,machine3 }) << std::endl;
+	//std::cout << statistics::MeanSSBetween(std::vector{ machine1 ,machine2 ,machine3 });
+	//std::cout << statistics::CalculateFRationValue(std::vector{ machine1 ,machine2 ,machine3 });
+	//statistics::ANOVA(std::vector{ machine1 ,machine2 ,machine3 });
+	//std::cout << statistics::getCriticalChiSquared(0.05, 4);
+	//statistics::GoodnessOfFitTest(std::vector{51, 52, 49, 83, 48}, std::vector{ 50, 50, 50, 50, 50 });
+	MATRIX m(5, 4, "Students", "Grades");
+	size_t br = 0;
+	for (size_t i = 0; i < 5; i++)
+	{
+		for (size_t j = 0; j < 4; j++)
+		{
+			m[i][j] = ++br;
+		}
+	}
+	m.PrintMatrix();
+
 }
