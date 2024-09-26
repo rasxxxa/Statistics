@@ -58,6 +58,75 @@
 //
 //These are just a few examples of other probability distributions that are used in statistics.There are many others, each with its own specific uses and characteristics.
 
+template <typename Type = size_t>
+class MATRIX
+{
+	using VECTOR = std::vector<Type>;
+public:
+	MATRIX() = default;
+	explicit MATRIX(size_t rows, size_t columns, const std::string& rowNames = "", const std::string& columnNames = "");
+	MATRIX(const MATRIX& matrix);
+
+	const VECTOR& operator[](uint32_t index) const;
+	VECTOR& operator[](uint32_t index);
+
+	bool operator==(const MATRIX& other) const;
+
+	MATRIX operator-() const;
+
+	friend MATRIX operator+(const MATRIX& left, const MATRIX& right);
+	friend MATRIX operator-(const MATRIX& left, const MATRIX& right);
+	friend MATRIX operator*(const MATRIX& left, const MATRIX& right);
+	friend MATRIX operator*(double left, const MATRIX& right);
+	friend MATRIX operator*(const MATRIX& left, double right);
+	friend MATRIX operator/(const MATRIX& left, double right);
+
+	MATRIX& operator+=(const MATRIX& other);
+	MATRIX& operator-=(const MATRIX& other);
+	MATRIX& operator*=(const MATRIX& other);
+	MATRIX& operator*=(double other);
+	MATRIX& operator/=(double other);
+	MATRIX& operator-=(double other);
+	MATRIX& operator+=(double other);
+
+	inline size_t GetRows() const { return matrix.size(); }
+	inline size_t GetColumns() const { return (*matrix.begin()).size(); }
+
+	void PrintMatrix() const
+	{
+		auto printSpaces = [](size_t spaces) {for (size_t i = 0; i < spaces; ++i) std::cout << "\t"; };
+		if (matrix.size() > 0 && matrix[0].size() > 0 && !rowName.empty()  && !columnName.empty())
+		{
+			for (size_t i{ 0u }; i < matrix.size(); ++i)
+			{
+				if (i == 0u)
+				{
+					for (size_t j{ 0u }; j < matrix[0].size(); ++j)
+					{
+						std::cout << "\t\t" << columnName + " " + std::to_string(j) + " ";
+					}
+				}
+				std::cout << std::endl;
+				for (size_t j{ 0u }; j < matrix[0].size(); ++j)
+				{
+					if (j == 0u)
+					{
+						std::cout << rowName << " ";
+					}
+					printSpaces(j);
+					std::cout << "\t";
+					std::cout << matrix[i][j] << " ";
+				}
+			}
+		}
+	}
+
+private:
+	std::vector<VECTOR> matrix;
+	std::string columnName;
+	std::string rowName;
+};
+
 namespace statistics
 {
 	template <typename VecType>
@@ -658,7 +727,7 @@ namespace statistics
 		}
 		else
 		{
-			return -1;  // Indicate an error
+			return -1;
 		}
 	}
 
@@ -1096,5 +1165,220 @@ auto main() -> int
 	//std::cout << statistics::CalculateFRationValue(std::vector{ machine1 ,machine2 ,machine3 });
 	//statistics::ANOVA(std::vector{ machine1 ,machine2 ,machine3 });
 	//std::cout << statistics::getCriticalChiSquared(0.05, 4);
-	statistics::GoodnessOfFitTest(std::vector{51, 52, 49, 83, 48}, std::vector{ 50, 50, 50, 50, 50 });
+	//statistics::GoodnessOfFitTest(std::vector{51, 52, 49, 83, 48}, std::vector{ 50, 50, 50, 50, 50 });
+	MATRIX m(5, 5, "Students", "Grades");
+	m.PrintMatrix();
+}
+
+template<typename Type>
+MATRIX<Type>::MATRIX(size_t rows, size_t columns, const std::string& rowNames, const std::string& columnNames)
+{
+	matrix.resize(rows);
+	for (size_t i{ 0u }; i < rows; ++i)
+		matrix[i].resize(columns);
+
+	for (size_t i = 0; i < rows; ++i)
+	{
+		for (size_t j = 0; j < columns; ++j)
+		{
+			matrix[i][j] = static_cast<Type>(0);
+		}
+	}
+
+	this->columnName = columnNames;
+	this->rowName = rowNames;
+}
+
+template<typename Type>
+MATRIX<Type>::MATRIX(const MATRIX& matrix)
+{
+	for (size_t i = 0; i < matrix.GetRows(); ++i)
+	{
+		for (size_t j = 0; j < matrix.GetColumns(); ++j)
+		{
+			this->matrix[i][j] = matrix[i][j];
+		}
+	}
+}
+
+template<typename Type>
+const MATRIX<Type>::VECTOR& MATRIX<Type>::operator[](uint32_t index) const
+{
+	return matrix.at(index);
+}
+
+template<typename Type>
+typename MATRIX<Type>::VECTOR& MATRIX<Type>::operator[](uint32_t index)
+{
+	return matrix[index];
+}
+
+template<typename Type>
+bool MATRIX<Type>::operator==(const MATRIX& other) const
+{
+	for (size_t i = 0; i < other.GetRows(); ++i)
+	{
+		for (size_t j = 0; j < other.GetColumns(); ++j)
+		{
+			if (matrix[i][j] != other[i][j])
+				return false;
+		}
+	}
+
+	return true;
+}
+
+template<typename Type>
+MATRIX<Type> MATRIX<Type>::operator-() const
+{
+	MATRIX<Type> newMatrix(*this);
+
+	for (size_t i{ 0u }; i < matrix.size(); ++i)
+		for (size_t j{ 0u }; j < matrix[i].size(); ++i)
+			newMatrix[i][j] = -matrix[i][j];
+
+	return newMatrix;
+}
+
+template <typename Type>
+MATRIX<Type> operator+(const MATRIX<Type>& left, const MATRIX<Type>& right)
+{
+	MATRIX<Type> newMatrix(left.matrix.size(), left.matrix[0].size());
+
+	for (size_t i{ 0u }; i < newMatrix.size(); ++i)
+		for (size_t j{ 0u }; j < newMatrix[i].size(); ++i)
+			newMatrix[i][j] = left[i][j] + right[i][j];
+
+	return newMatrix;
+}
+
+template <typename Type>
+MATRIX<Type> operator-(const MATRIX<Type>& left, const MATRIX<Type>& right)
+{
+	MATRIX<Type> newMatrix(left.matrix.size(), left.matrix[0].size());
+
+	for (size_t i{ 0u }; i < newMatrix.size(); ++i)
+		for (size_t j{ 0u }; j < newMatrix[i].size(); ++i)
+			newMatrix[i][j] = left[i][j] - right[i][j];
+
+	return newMatrix;
+}
+
+template <typename Type>
+MATRIX<Type> operator*(const MATRIX<Type>& left, const MATRIX<Type>& right)
+{
+	MATRIX<Type> newMatrix(left.matrix.size(), left.matrix[0].size());
+
+	for (size_t i{ 0u }; i < newMatrix.size(); ++i)
+		for (size_t j{ 0u }; j < newMatrix[i].size(); ++i)
+			newMatrix[i][j] = left[i][j] * right[i][j];
+
+	return newMatrix;
+}
+
+
+template <typename Type>
+MATRIX<Type> operator*(double left, const MATRIX<Type>& right)
+{
+	MATRIX<Type> newMatrix(left.matrix.size(), left.matrix[0].size());
+
+	for (size_t i{ 0u }; i < newMatrix.size(); ++i)
+		for (size_t j{ 0u }; j < newMatrix[i].size(); ++i)
+			newMatrix[i][j] = left * right[i][j];
+
+	return newMatrix;
+}
+
+template <typename Type>
+MATRIX<Type> operator*(const MATRIX<Type>& left, double right)
+{
+	MATRIX<Type> newMatrix(left.matrix.size(), left.matrix[0].size());
+
+	for (size_t i{ 0u }; i < newMatrix.size(); ++i)
+		for (size_t j{ 0u }; j < newMatrix[i].size(); ++i)
+			newMatrix[i][j] = left[i][j] * right;
+
+	return newMatrix;
+}
+
+template <typename Type>
+MATRIX<Type> operator/(const MATRIX<Type>& left, double right)
+{
+	MATRIX<Type> newMatrix(left.matrix.size(), left.matrix[0].size());
+
+	for (size_t i{ 0u }; i < newMatrix.size(); ++i)
+		for (size_t j{ 0u }; j < newMatrix[i].size(); ++i)
+			newMatrix[i][j] = left[i][j] / right;
+
+	return newMatrix;
+}
+
+template<typename Type>
+MATRIX<Type>& MATRIX<Type>::operator+=(const MATRIX<Type>& other)
+{
+	for (size_t i{ 0u }; i < other.GetRows(); ++i)
+		for (size_t j{ 0u }; j < other.GetColumns(); ++i)
+			matrix[i][j] += other[i][j];
+
+	return *this;
+}
+
+template<typename Type>
+MATRIX<Type>& MATRIX<Type>::operator-=(const MATRIX<Type>& other)
+{
+	for (size_t i{ 0u }; i < other.GetRows(); ++i)
+		for (size_t j{ 0u }; j < other.GetColumns(); ++i)
+			matrix[i][j] -= other[i][j];
+
+	return *this;
+}
+
+template<typename Type>
+MATRIX<Type>& MATRIX<Type>::operator*=(const MATRIX<Type>& other)
+{
+	for (size_t i{ 0u }; i < other.GetRows(); ++i)
+		for (size_t j{ 0u }; j < other.GetColumns(); ++i)
+			matrix[i][j] *= other[i][j];
+
+	return *this;
+}
+
+template<typename Type>
+MATRIX<Type>& MATRIX<Type>::operator*=(double other)
+{
+	for (size_t i{ 0u }; i < other.GetRows(); ++i)
+		for (size_t j{ 0u }; j < other.GetColumns(); ++i)
+			matrix[i][j] *= other;
+
+	return *this;
+}
+
+template<typename Type>
+MATRIX<Type>& MATRIX<Type>::operator/=(double other)
+{
+	for (size_t i{ 0u }; i < other.GetRows(); ++i)
+		for (size_t j{ 0u }; j < other.GetColumns(); ++i)
+			matrix[i][j] /= other;
+
+	return *this;
+}
+
+template<typename Type>
+MATRIX<Type>& MATRIX<Type>::operator-=(double other)
+{
+	for (size_t i{ 0u }; i < other.GetRows(); ++i)
+		for (size_t j{ 0u }; j < other.GetColumns(); ++i)
+			matrix[i][j] -= other;
+
+	return *this;
+}
+
+template<typename Type>
+MATRIX<Type>& MATRIX<Type>::operator+=(double other)
+{
+	for (size_t i{ 0u }; i < other.GetRows(); ++i)
+		for (size_t j{ 0u }; j < other.GetColumns(); ++i)
+			matrix[i][j] += other;
+
+	return *this;
 }
