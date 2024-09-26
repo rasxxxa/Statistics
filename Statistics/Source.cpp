@@ -11,7 +11,7 @@
 #include <numeric>
 #include <map>
 #include <random>
-
+#include <iomanip>
 //List of Common Probability Distributions
 //We recently published an article on our website that we thought you might find helpful, particularly if you are studying for an exam.This article can serve as a useful reference tool for a quick consultation.We hope you find it useful.
 //
@@ -94,7 +94,6 @@ public:
 
 	void PrintMatrix() const
 	{
-		auto printSpaces = [](size_t spaces) {for (size_t i = 0; i < spaces; ++i) std::cout << "\t"; };
 		if (matrix.size() > 0 && matrix[0].size() > 0 && !rowName.empty()  && !columnName.empty())
 		{
 			for (size_t i{ 0u }; i < matrix.size(); ++i)
@@ -103,7 +102,7 @@ public:
 				{
 					for (size_t j{ 0u }; j < matrix[0].size(); ++j)
 					{
-						std::cout << "\t\t" << columnName + " " + std::to_string(j) + " ";
+						std::cout << "\t" << columnName + " " + std::to_string(j) + " ";
 					}
 				}
 				std::cout << std::endl;
@@ -111,11 +110,10 @@ public:
 				{
 					if (j == 0u)
 					{
-						std::cout << rowName << " ";
+						std::cout << rowName << "\t";
 					}
-					printSpaces(j);
-					std::cout << "\t";
-					std::cout << matrix[i][j] << " ";
+					std::cout << std::setw(10);
+					std::cout << matrix[i][j];
 				}
 			}
 		}
