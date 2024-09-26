@@ -68,6 +68,7 @@ public:
 	MATRIX() = default;
 	explicit MATRIX(size_t rows, size_t columns, const std::string& rowNames = "", const std::string& columnNames = "");
 	MATRIX(const MATRIX& matrix);
+	MATRIX(const std::vector<VECTOR>& vectors);
 
 	const VECTOR& operator[](uint32_t index) const;
 	VECTOR& operator[](uint32_t index);
@@ -94,7 +95,14 @@ public:
 	inline size_t GetRows() const { return matrix.size(); }
 	inline size_t GetColumns() const { return (*matrix.begin()).size(); }
 
+	VECTOR GetColumn(size_t index) const;
+	VECTOR GetRow(size_t index) const;
+
 	void PrintMatrix() const;
+
+	inline void SetColumnName(const std::string& columnName) { this->columnName = columnName; };
+	inline void SetRowName(const std::string& rowName) { this->rowName = rowName; };
+
 private:
 	std::vector<VECTOR> matrix;
 	std::string columnName = "column";
@@ -491,15 +499,6 @@ namespace statistics
 		return bins;
 	}
 
-	template <typename VecType>
-	void PrintVec(const VecType& vec)
-	{
-		for (const auto& elem : vec)
-			std::cout << elem << ", ";
-
-		std::cout << std::endl;
-	}
-
 	// doesnt work for big numbers
 	// but it is fine for test purpose 
 	unsigned long long fact(size_t number)
@@ -732,6 +731,55 @@ namespace statistics
 		}
 	}
 
+	template <typename Type>
+	void ContigencyTable(const MATRIX<Type>& table)
+	{
+		double resultSum = 0.0;
+		for (size_t i{ 0u }; i < table.GetRows(); ++i)
+		{
+			for (size_t j{ 0u }; j < table.GetColumns(); ++j)
+			{
+				resultSum += table[i][j];
+			}
+		}
+
+		std::vector<Type> sumRows, sumColumns;
+		for (size_t i = 0; i < table.GetRows(); ++i)
+			sumRows.emplace_back(statistics::sum(table.GetRow(i)));
+
+		for (size_t i = 0; i < table.GetColumns(); ++i)
+			sumColumns.emplace_back(statistics::sum(table.GetColumn(i)));
+
+		MATRIX<double> expected(table.GetRows(), table.GetColumns());
+		double expetedValueSum = 0.0f;
+		for (size_t i{}; i < expected.GetRows(); ++i)
+		{
+			for (size_t j{}; j < expected.GetColumns(); ++j)
+			{
+				expected[i][j] = static_cast<double>(sumRows[i] * sumColumns[j] / resultSum);
+				expetedValueSum += expected[i][j];
+			}
+		}
+
+		double sumAll = 0.0f;
+		for (size_t row{}; row < expected.GetRows(); ++row)
+		{
+			for (size_t column{}; column < expected.GetColumns(); ++column)
+			{
+				sumAll += std::pow(static_cast<double>(table[row][column]) - expected[row][column], 2) / expected[row][column];
+			}
+		}
+
+		auto criticalStatistics = getCriticalChiSquared(0.05, (expected.GetRows() - 1) * (expected.GetColumns() - 1));
+		if (sumAll > criticalStatistics)
+		{
+			std::cout << "Null hypothesis rejected, there is dependency!!!" << std::endl;
+		}
+		else
+		{
+			std::cout << "Null hypothesis accepted!!! " << std::endl;
+		}
+	}
 
 	class Random
 	{
@@ -1000,6 +1048,15 @@ namespace statistics
 
 };
 
+template <typename VecType>
+void PrintVec(const VecType& vec)
+{
+	for (const auto& elem : vec)
+		std::cout << elem << ", ";
+
+	std::cout << std::endl;
+}
+
 
 void print_break(const std::vector<size_t>& widths)
 {
@@ -1095,6 +1152,10 @@ MATRIX<Type>::MATRIX(size_t rows, size_t columns, const std::string& rowNames, c
 template<typename Type>
 MATRIX<Type>::MATRIX(const MATRIX& matrix)
 {
+	this->matrix.resize(matrix.GetRows());
+	for (size_t i{ 0u }; i < matrix.GetRows(); ++i)
+		this->matrix[i].resize(matrix.GetColumns());
+
 	for (size_t i = 0; i < matrix.GetRows(); ++i)
 	{
 		for (size_t j = 0; j < matrix.GetColumns(); ++j)
@@ -1102,6 +1163,12 @@ MATRIX<Type>::MATRIX(const MATRIX& matrix)
 			this->matrix[i][j] = matrix[i][j];
 		}
 	}
+}
+
+template<typename Type>
+MATRIX<Type>::MATRIX(const std::vector<typename MATRIX<Type>::VECTOR>& vectors)
+{
+	this->matrix = vectors;
 }
 
 template<typename Type>
@@ -1287,6 +1354,30 @@ MATRIX<Type>& MATRIX<Type>::operator+=(double other)
 }
 
 template<typename Type>
+typename MATRIX<Type>::VECTOR MATRIX<Type>::GetColumn(size_t index) const
+{
+	if (index >= matrix[0].size())
+		throw std::runtime_error("index out of bounds");
+
+	std::vector<Type> result;
+	for (size_t i{ 0u }; i < matrix.size(); ++i)
+	{
+		result.push_back(matrix[i][index]);
+	}
+
+	return result;
+}
+
+template<typename Type>
+typename MATRIX<Type>::VECTOR MATRIX<Type>::GetRow(size_t index) const
+{
+	if (index >= matrix.size())
+		throw std::runtime_error("index out of bounds");
+
+	return matrix[index];
+}
+
+template<typename Type>
 void MATRIX<Type>::PrintMatrix() const
 {
 	if (matrix.size() > 0 && matrix[0].size() > 0)
@@ -1335,9 +1426,11 @@ void MATRIX<Type>::PrintMatrix() const
 }
 
 
+
 auto main() -> int
 {
-	std::vector<int> a{ 12,3,4,5,6,11,12 };
+#pragma region COMMENTED
+	/*std::vector<int> a{ 12,3,4,5,6,11,12 };
 	std::vector < std::string> c{ "a", "b", "c", "d", "e", "f", "g" };
 	std::vector<float> b{
 		21.0f,
@@ -1382,7 +1475,7 @@ auto main() -> int
 	std::vector<float> borders{ 20.0f, 22.0f, 30.0f };
 	std::array machine1{ 150, 151, 152, 152, 151, 150 };
 	std::array machine2{ 153, 152, 148, 151, 149, 152 };
-	std::array machine3{ 156, 154, 155, 156, 157, 155 };
+	std::array machine3{ 156, 154, 155, 156, 157, 155 };*/
 
 	//std::cout << statistics::sum(a, [](int a) {return a % 2 == 0; });
 	//std::cout << statistics::avg(a, [](int a) {return a % 2 == 0; });
@@ -1438,15 +1531,24 @@ auto main() -> int
 	//statistics::ANOVA(std::vector{ machine1 ,machine2 ,machine3 });
 	//std::cout << statistics::getCriticalChiSquared(0.05, 4);
 	//statistics::GoodnessOfFitTest(std::vector{51, 52, 49, 83, 48}, std::vector{ 50, 50, 50, 50, 50 });
-	MATRIX m(5, 4, "Students", "Grades");
-	size_t br = 0;
-	for (size_t i = 0; i < 5; i++)
-	{
-		for (size_t j = 0; j < 4; j++)
-		{
-			m[i][j] = ++br;
-		}
-	}
-	m.PrintMatrix();
+#pragma endregion
 
+    //   MATRIX m(5, 4, "Students", "Grades");
+	//size_t br = 0;
+	//for (size_t i = 0; i < 5; i++)
+	//{
+	//	for (size_t j = 0; j < 4; j++)
+	//	{
+	//		m[i][j] = ++br;
+	//	}
+	//}
+	//m.PrintMatrix();
+
+	//PrintVec(m.GetColumn(0));
+	//PrintVec(m.GetRow(0));
+	//statistics::ContigencyTable(m);
+	MATRIX m(std::vector{ std::vector<size_t>{22,26,23}, std::vector<size_t>{28,62,26}, std::vector<size_t>{72,22,66} });
+	m.SetRowName("Shift");
+	m.SetColumnName("Operator");
+	statistics::ContigencyTable(m);
 }
