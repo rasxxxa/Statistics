@@ -825,6 +825,32 @@ namespace statistics
 		std::cout << static_cast<size_t>(std::pow(correlationR, 2) * 100) << "% correlation is because of Xes \n";
 	}
 
+    // Regression
+	// Gets a and b from y = a + bx
+	template <typename VecType> 
+	std::pair<double, double> CalculateABRegression(const VecType& x, const VecType& y)
+	{
+		const auto N = std::size(x);
+		const auto sumX = static_cast<double>(sum(x));
+		const auto sumY = static_cast<double>(sum(y));
+		double upL{}, upR{sumX * sumY}, downL{}, downR{std::pow(sumX, 2)};
+		for (size_t i{}; i < N; ++i)
+		{
+			upL += (x[i] * y[i]);
+			downL += std::pow(x[i], 2);
+		}
+		const double b = (N * upL - upR) / (N * downL - downR);
+		const double a = (sumY - b * sumX) / N;
+		return std::make_pair(a, b);
+	}
+
+	template <typename VecType>
+	double GetPredictionOFY(const VecType& x, const VecType& y, const double XTest)
+	{
+		const auto [a, b] = CalculateABRegression(x, y);
+		return a + b * XTest;
+	}
+
 
 	class Random
 	{
@@ -1605,5 +1631,5 @@ auto main() -> int
 
 std::vector x{ 20, 24, 46, 62, 22, 37, 45, 27, 65, 23 };
 std::vector y{ 40, 55, 69, 83, 27, 44, 61, 33, 71, 37 };
-PercentageOfCorrelation(CorrelationFactorR(x, y));
+std::cout << GetPredictionOFY(x, y, 22);
 }
