@@ -682,9 +682,9 @@ namespace statistics
 		}
 	}
 
-	double getCriticalChiSquared(double alpha, int degreesOfFreedom)
+	double getCriticalChiSquared(double alpha, size_t degreesOfFreedom)
 	{
-		std::map<std::pair<int, double>, double> chiSquaredTable = 
+		std::map<std::pair<size_t, double>, double> chiSquaredTable = 
 		{
 			{{1, 0.05}, 3.8415}, {{1, 0.01}, 6.6349},
 			{{2, 0.05}, 5.9915}, {{2, 0.01}, 9.2103},
@@ -700,7 +700,7 @@ namespace statistics
 		}
 		else
 		{
-			return -1;
+			return -1.0;
 		}
 	}
 
@@ -735,9 +735,9 @@ namespace statistics
 	void ContigencyTable(const MATRIX<Type>& table)
 	{
 		double resultSum = 0.0;
-		for (size_t i{ 0u }; i < table.GetRows(); ++i)
+		for (uint32_t i{ 0u }; i < table.GetRows(); ++i)
 		{
-			for (size_t j{ 0u }; j < table.GetColumns(); ++j)
+			for (uint32_t j{ 0u }; j < table.GetColumns(); ++j)
 			{
 				resultSum += table[i][j];
 			}
@@ -752,9 +752,9 @@ namespace statistics
 
 		MATRIX<double> expected(table.GetRows(), table.GetColumns());
 		double expetedValueSum = 0.0f;
-		for (size_t i{}; i < expected.GetRows(); ++i)
+		for (uint32_t i{}; i < expected.GetRows(); ++i)
 		{
-			for (size_t j{}; j < expected.GetColumns(); ++j)
+			for (uint32_t j{}; j < expected.GetColumns(); ++j)
 			{
 				expected[i][j] = static_cast<double>(sumRows[i] * sumColumns[j] / resultSum);
 				expetedValueSum += expected[i][j];
@@ -762,9 +762,9 @@ namespace statistics
 		}
 
 		double sumAll = 0.0f;
-		for (size_t row{}; row < expected.GetRows(); ++row)
+		for (uint32_t row{}; row < expected.GetRows(); ++row)
 		{
-			for (size_t column{}; column < expected.GetColumns(); ++column)
+			for (uint32_t column{}; column < expected.GetColumns(); ++column)
 			{
 				sumAll += std::pow(static_cast<double>(table[row][column]) - expected[row][column], 2) / expected[row][column];
 			}
@@ -899,7 +899,7 @@ namespace statistics
 			return 0.0;
 		}
 
-		double tWithDegreesOfFreedom(double t, int df) 
+		double tWithDegreesOfFreedom(double t, size_t df) 
 		{
 			if (t < 0) 
 				return 0.5 * std::tgamma((df + 1) / 2.0) / (std::sqrt(df * std::numbers::pi) * std::tgamma(df / 2.0) * std::pow(1 + (t * t) / df, (df + 1) / 2.0));
@@ -907,7 +907,7 @@ namespace statistics
 			return 1.0 - 0.5 * std::tgamma((df + 1) / 2.0) / (std::sqrt(df * std::numbers::pi) * std::tgamma(df / 2.0) * std::pow(1 + (t * t) / df, (df + 1) / 2.0));
 		}
 
-		double FindTValue(int df, double alpha, bool two_tailed) 
+		double FindTValue(size_t df, double alpha, bool two_tailed) 
 		{
 			if (two_tailed) 
 			{
@@ -1121,8 +1121,8 @@ void Simulation2(size_t sample)
 		auto result = static_cast<size_t>(std::sqrt(std::pow(xRand, 2) + std::pow(yRand, 2)));
 		if (result <= 24)
 		{
-			x.push_back(xRand);
-			y.push_back(yRand);
+			x.push_back(static_cast<long long>(xRand));
+			y.push_back(static_cast<long long>(yRand));
 		}
 	}
 
@@ -1531,9 +1531,7 @@ auto main() -> int
 	//statistics::ANOVA(std::vector{ machine1 ,machine2 ,machine3 });
 	//std::cout << statistics::getCriticalChiSquared(0.05, 4);
 	//statistics::GoodnessOfFitTest(std::vector{51, 52, 49, 83, 48}, std::vector{ 50, 50, 50, 50, 50 });
-#pragma endregion
-
-    //   MATRIX m(5, 4, "Students", "Grades");
+	//   MATRIX m(5, 4, "Students", "Grades");
 	//size_t br = 0;
 	//for (size_t i = 0; i < 5; i++)
 	//{
@@ -1547,8 +1545,10 @@ auto main() -> int
 	//PrintVec(m.GetColumn(0));
 	//PrintVec(m.GetRow(0));
 	//statistics::ContigencyTable(m);
+#pragma endregion
 	MATRIX m(std::vector{ std::vector<size_t>{22,26,23}, std::vector<size_t>{28,62,26}, std::vector<size_t>{72,22,66} });
 	m.SetRowName("Shift");
 	m.SetColumnName("Operator");
+	m.PrintMatrix();
 	statistics::ContigencyTable(m);
 }
