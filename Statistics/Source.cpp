@@ -69,6 +69,23 @@ public:
 	explicit MATRIX(size_t rows, size_t columns, const std::string& rowNames = "", const std::string& columnNames = "");
 	MATRIX(const MATRIX& matrix);
 	MATRIX(const std::vector<VECTOR>& vectors);
+	template <typename OtherType>
+	MATRIX(const MATRIX<OtherType>& other);
+	//{
+	//	matrix.clear();
+	//	matrix.resize(other.GetRows());
+	//	for (auto& row : matrix)
+	//		row.resize(other.GetColumns());
+
+	//	for (uint32_t i{}; i < other.GetRows(); ++i)
+	//	{
+	//		for (uint32_t j{}; j < other.GetColumns(); ++j)
+	//		{
+	//			matrix[i][j] = static_cast<Type>(other[i][j]);
+	//		}
+	//	}
+
+	//}
 
 	const VECTOR& operator[](uint32_t index) const;
 	VECTOR& operator[](uint32_t index);
@@ -79,7 +96,8 @@ public:
 
 	friend MATRIX operator+(const MATRIX& left, const MATRIX& right);
 	friend MATRIX operator-(const MATRIX& left, const MATRIX& right);
-	friend MATRIX operator*(const MATRIX& left, const MATRIX& right);
+	template<typename Type>
+	friend MATRIX<Type> operator*(const MATRIX<Type>& left, const MATRIX<Type>& right);
 	friend MATRIX operator*(double left, const MATRIX& right);
 	friend MATRIX operator*(const MATRIX& left, double right);
 	friend MATRIX operator/(const MATRIX& left, double right);
@@ -1247,6 +1265,24 @@ MATRIX<Type>::MATRIX(const std::vector<typename MATRIX<Type>::VECTOR>& vectors)
 	this->matrix = vectors;
 }
 
+template <typename Type>
+template <typename OtherType>
+MATRIX<Type>::MATRIX(const MATRIX<typename OtherType>& other)
+{
+	matrix.clear();
+	matrix.resize(other.GetRows());
+	for (auto& row : matrix)
+		row.resize(other.GetColumns());
+
+	for (uint32_t i{}; i < other.GetRows(); ++i)
+	{
+		for (uint32_t j{}; j < other.GetColumns(); ++j)
+		{
+			matrix[i][j] = static_cast<Type>(other[i][j]);
+		}
+	}
+}
+
 template<typename Type>
 const MATRIX<Type>::VECTOR& MATRIX<Type>::operator[](uint32_t index) const
 {
@@ -1313,13 +1349,24 @@ MATRIX<Type> operator-(const MATRIX<Type>& left, const MATRIX<Type>& right)
 template <typename Type>
 MATRIX<Type> operator*(const MATRIX<Type>& left, const MATRIX<Type>& right)
 {
-	MATRIX<Type> newMatrix(left.matrix.size(), left.matrix[0].size());
+	if (left.GetColumns() != right.GetRows())
+		throw std::runtime_error("this.columns should be like other.rows! \n");
 
-	for (size_t i{ 0u }; i < newMatrix.size(); ++i)
-		for (size_t j{ 0u }; j < newMatrix[i].size(); ++i)
-			newMatrix[i][j] = left[i][j] * right[i][j];
+	MATRIX<Type> result(left.GetRows(), right.GetColumns());
+	for (uint32_t i{}; i < result.GetRows(); ++i)
+	{
+		for (uint32_t j{}; j < result.GetColumns(); ++j)
+		{
+			const auto& multRow = left.GetRow(i);
+			const auto column = right.GetColumn(j);
 
-	return newMatrix;
+			for (size_t k{}; k < std::size(multRow); ++k)
+			{
+				result[i][j] += multRow[k] * column[k];
+			}
+		}
+	}
+	return result;
 }
 
 
@@ -1626,10 +1673,16 @@ auto main() -> int
 //m.SetColumnName("Operator");
 //m.PrintMatrix();
 //statistics::ContigencyTable(m);
+//
+//std::vector x{ 20, 24, 46, 62, 22, 37, 45, 27, 65, 23 };
+//std::vector y{ 40, 55, 69, 83, 27, 44, 61, 33, 71, 37 };
+//std::cout << GetPredictionOFY(x, y, 22);
+//MATRIX<size_t> m1(5, 5);
+//MATRIX<double> m2(m1);
+//MATRIX<size_t> m1(std::vector{ std::vector<size_t>{2,3}, std::vector<size_t>{4,5}, std::vector<size_t>{6,7} });
+//MATRIX<size_t> m2(std::vector{ std::vector<size_t>{2,4, 6}, std::vector<size_t>{3,5,7} });
+//auto m3(m1* m2);
+//m3.PrintMatrix();
 #pragma endregion
 
-
-std::vector x{ 20, 24, 46, 62, 22, 37, 45, 27, 65, 23 };
-std::vector y{ 40, 55, 69, 83, 27, 44, 61, 33, 71, 37 };
-std::cout << GetPredictionOFY(x, y, 22);
 }
