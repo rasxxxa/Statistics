@@ -71,22 +71,6 @@ public:
 	MATRIX(const std::vector<VECTOR>& vectors);
 	template <typename OtherType>
 	MATRIX(const MATRIX<OtherType>& other);
-	//{
-	//	matrix.clear();
-	//	matrix.resize(other.GetRows());
-	//	for (auto& row : matrix)
-	//		row.resize(other.GetColumns());
-
-	//	for (uint32_t i{}; i < other.GetRows(); ++i)
-	//	{
-	//		for (uint32_t j{}; j < other.GetColumns(); ++j)
-	//		{
-	//			matrix[i][j] = static_cast<Type>(other[i][j]);
-	//		}
-	//	}
-
-	//}
-
 	const VECTOR& operator[](uint32_t index) const;
 	VECTOR& operator[](uint32_t index);
 
