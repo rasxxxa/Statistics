@@ -781,6 +781,51 @@ namespace statistics
 		}
 	}
 
+	template <typename VecType>
+	double CorrelationFactorR(const VecType& x, const VecType& y)
+	{
+		const auto xAvg = avg(x);
+		const auto yAvg = avg(y);
+
+		double upperPart = 0.0;
+
+		for (size_t i{}; i < std::size(x); ++i)
+		{
+			upperPart += ((x[i] - xAvg) * (y[i] - yAvg));
+		}
+
+		double downPartLeft = 0.0, downPartRight = 0.0;
+		for (size_t i{}; i < std::size(x); ++i)
+		{
+			downPartLeft += std::pow(x[i] - xAvg, 2);
+			downPartRight += std::pow(y[i] - yAvg, 2);
+		}
+
+		return upperPart / (std::sqrt(downPartLeft * downPartRight));
+	}
+
+	void CheckIsThereCorrelation(const double correlationFactorR)
+	{
+		if (correlationFactorR < std::numeric_limits<double>::epsilon())
+		{
+			std::cout << "Not correlated! \n" << std::endl;
+		}
+		else if (correlationFactorR < -0.5 || correlationFactorR > 0.5)
+		{
+			std::cout << "Strong correlated! \n";
+		}
+		else
+		{
+			std::cout << "Weak correlated! \n";
+		}
+	}
+
+	void PercentageOfCorrelation(const double correlationR)
+	{
+		std::cout << static_cast<size_t>(std::pow(correlationR, 2) * 100) << "% correlation is because of Xes \n";
+	}
+
+
 	class Random
 	{
 	public:
@@ -1027,6 +1072,8 @@ namespace statistics
 		}
 
 
+
+
 		// Anova used for severals means 
 		// Checking one or more samples has different mean than population
 
@@ -1047,6 +1094,9 @@ namespace statistics
 	}
 
 };
+
+
+#pragma region Regular
 
 template <typename VecType>
 void PrintVec(const VecType& vec)
@@ -1425,8 +1475,8 @@ void MATRIX<Type>::PrintMatrix() const
 	}
 }
 
-
-
+#pragma endregion
+using namespace statistics;
 auto main() -> int
 {
 #pragma region COMMENTED
@@ -1545,10 +1595,15 @@ auto main() -> int
 	//PrintVec(m.GetColumn(0));
 	//PrintVec(m.GetRow(0));
 	//statistics::ContigencyTable(m);
+//MATRIX m(std::vector{ std::vector<size_t>{22,26,23}, std::vector<size_t>{28,62,26}, std::vector<size_t>{72,22,66} });
+//m.SetRowName("Shift");
+//m.SetColumnName("Operator");
+//m.PrintMatrix();
+//statistics::ContigencyTable(m);
 #pragma endregion
-	MATRIX m(std::vector{ std::vector<size_t>{22,26,23}, std::vector<size_t>{28,62,26}, std::vector<size_t>{72,22,66} });
-	m.SetRowName("Shift");
-	m.SetColumnName("Operator");
-	m.PrintMatrix();
-	statistics::ContigencyTable(m);
+
+
+std::vector x{ 20, 24, 46, 62, 22, 37, 45, 27, 65, 23 };
+std::vector y{ 40, 55, 69, 83, 27, 44, 61, 33, 71, 37 };
+PercentageOfCorrelation(CorrelationFactorR(x, y));
 }
