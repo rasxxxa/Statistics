@@ -78,6 +78,8 @@ public:
 
 	MATRIX operator-() const;
 
+	MATRIX GetNthDegree(size_t degree);
+
 	friend MATRIX operator+(const MATRIX& left, const MATRIX& right);
 	friend MATRIX operator-(const MATRIX& left, const MATRIX& right);
 	template<typename Type>
@@ -1306,6 +1308,24 @@ MATRIX<Type> MATRIX<Type>::operator-() const
 	return newMatrix;
 }
 
+template<typename Type>
+MATRIX<Type> MATRIX<Type>::GetNthDegree(size_t degree)
+{
+	if (degree == 1 || degree == 0)
+		return *this;
+
+	const auto newMatrix = GetNthDegree(degree / 2);
+	if (degree % 2 == 0)
+	{
+		return newMatrix * newMatrix;
+	}
+	else
+	{
+		return *this * newMatrix * newMatrix;
+	}
+
+}
+
 template <typename Type>
 MATRIX<Type> operator+(const MATRIX<Type>& left, const MATRIX<Type>& right)
 {
@@ -1666,7 +1686,8 @@ auto main() -> int
 //MATRIX<size_t> m1(std::vector{ std::vector<size_t>{2,3}, std::vector<size_t>{4,5}, std::vector<size_t>{6,7} });
 //MATRIX<size_t> m2(std::vector{ std::vector<size_t>{2,4, 6}, std::vector<size_t>{3,5,7} });
 //auto m3(m1* m2);
-//m3.PrintMatrix();
+////m3.PrintMatrix();
+//MATRIX<size_t> m2(std::vector{ std::vector<size_t>{2,2, 2}, std::vector<size_t>{2,2,2}, std::vector<size_t>{2,2,2} });
+//m2.GetNthDegree(3).PrintMatrix();
 #pragma endregion
-
 }
