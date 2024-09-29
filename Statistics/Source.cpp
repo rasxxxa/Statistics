@@ -67,6 +67,7 @@ class MATRIX
 public:
 	MATRIX() = default;
 	explicit MATRIX(size_t rows, size_t columns, const std::string& rowNames = "", const std::string& columnNames = "");
+	explicit MATRIX(size_t identityMatrixSize);
 	MATRIX(const MATRIX& matrix);
 	MATRIX(const std::vector<VECTOR>& vectors);
 	template <typename OtherType>
@@ -109,6 +110,7 @@ public:
 	MATRIX GetTransposed() const;
 	static double SmallMatrixLaibnizDeterminant(const MATRIX& type);
 	static double CalculateAndDivideMatrices(const MATRIX& type);
+	static double CalculateThroughLUDecomposition(const MATRIX& type);
 	MATRIX CreateMatrixWithoutColumn(size_t column) const;
 	inline void SetColumnName(const std::string& columnName) { this->columnName = columnName; };
 	inline void SetRowName(const std::string& rowName) { this->rowName = rowName; };
@@ -1235,6 +1237,19 @@ MATRIX<Type>::MATRIX(size_t rows, size_t columns, const std::string& rowNames, c
 }
 
 template<typename Type>
+MATRIX<Type>::MATRIX(size_t identityMatrixSize)
+{
+	matrix.resize(identityMatrixSize);
+	for (size_t i{ 0u }; i < identityMatrixSize; ++i)
+		matrix[i].resize(identityMatrixSize);
+
+	for (size_t i = 0; i < identityMatrixSize; ++i)
+	{
+		matrix[i][i] = static_cast<Type>(1);
+	}
+}
+
+template<typename Type>
 MATRIX<Type>::MATRIX(const MATRIX& matrix)
 {
 	this->matrix.resize(matrix.GetRows());
@@ -1623,6 +1638,36 @@ double MATRIX<Type>::CalculateAndDivideMatrices(const MATRIX& type)
 }
 
 template<typename Type>
+double MATRIX<Type>::CalculateThroughLUDecomposition(const MATRIX& type)
+{
+	double result{};
+
+	MATRIX<double> upperTriangle(type);
+	MATRIX<double> lowerTriangle(type.GetRows());
+
+	for (uint32_t pivot{0}; pivot < type.GetRows() - 1; ++pivot)
+	{
+		for (uint32_t row{ pivot + 1 }; row < type.GetRows(); ++row)
+		{
+			double difference = upperTriangle[row][pivot] / upperTriangle[pivot][pivot];
+			lowerTriangle[row][pivot] = difference;
+			auto rowC = upperTriangle.GetRow(pivot);
+			std::ranges::for_each(rowC, [difference](auto& element) {element *= difference; });
+			for (size_t i{}; i < std::size(rowC); ++i)
+			{
+				upperTriangle[row][i] -= rowC[i];
+			}
+			std::cout << "UPPER \n";
+			upperTriangle.PrintMatrix();
+			std::cout << "LOWER \n";
+			lowerTriangle.PrintMatrix();
+		}
+	}
+
+	return result;
+}
+
+template<typename Type>
 MATRIX<Type> MATRIX<Type>::CreateMatrixWithoutColumn(size_t column) const
 {
 	MATRIX<Type> result(GetRows() - 1, GetColumns() - 1);
@@ -1794,15 +1839,20 @@ auto main() -> int
 //m2.PrintMatrix();
 //std::cout << m2.GetDeterminant();
 #pragma endregion
-MATRIX<int64_t> test(6, 6);
-for (uint32_t i{}; i < test.GetColumns(); ++i)
-{
-	for (uint32_t j{}; j < test.GetRows(); ++j)
-	{
-		test[i][j] = statistics::random.GetUniformInt(-200, 200);
-	}
-}
+//MATRIX<int64_t> test(6, 6);
+//for (uint32_t i{}; i < test.GetColumns(); ++i)
+//{
+//	for (uint32_t j{}; j < test.GetRows(); ++j)
+//	{
+//		test[i][j] = statistics::random.GetUniformInt(-200, 200);
+//	}
+//}
+//
+//test.PrintMatrix();
+//std::cout << test.GetDeterminant();
+MATRIX<int> m2(std::vector{ std::vector<int>{4,3,2, 2}, std::vector<int>{0,1,-3, 3}, std::vector<int>{0,-1,3, 3}, 
+	std::vector<int>{0,3,1,1} });
+m2.PrintMatrix();
 
-test.PrintMatrix();
-std::cout << test.GetDeterminant();
+MATRIX<int>::CalculateThroughLUDecomposition(m2);
 }
