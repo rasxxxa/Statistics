@@ -102,10 +102,12 @@ public:
 	VECTOR GetColumn(size_t index) const;
 	VECTOR GetRow(size_t index) const;
 
+	double GetDeterminant() const;
+
 	void PrintMatrix() const;
 
 	MATRIX GetTransposed() const;
-
+	static double SmallMatrixLaibnizDeterminant(const MATRIX& type);
 	inline void SetColumnName(const std::string& columnName) { this->columnName = columnName; };
 	inline void SetRowName(const std::string& rowName) { this->rowName = rowName; };
 private:
@@ -1506,6 +1508,27 @@ typename MATRIX<Type>::VECTOR MATRIX<Type>::GetRow(size_t index) const
 }
 
 template<typename Type>
+double MATRIX<Type>::GetDeterminant() const
+{
+	if (GetRows() != GetColumns())
+		throw std::runtime_error("Matrix should be squared");
+
+	double determinant = 0.0;
+
+	if (GetRow() <= 4)
+	{
+		// Do laibniz for small matrices. For bigger matrices use LU decomposition or Gauss 
+
+	}
+	else
+	{
+
+	}
+
+	return determinant;
+}
+
+template<typename Type>
 void MATRIX<Type>::PrintMatrix() const
 {
 	if (matrix.size() > 0 && matrix[0].size() > 0)
@@ -1559,13 +1582,25 @@ MATRIX<Type> MATRIX<Type>::GetTransposed() const
 	MATRIX<Type> matrix(GetColumns(), GetRows());
 	for (uint32_t i{}; i < GetColumns(); ++i)
 	{
-		for (uin32_t j{}; j < GetRows(); ++j)
+		for (uint32_t j{}; j < GetRows(); ++j)
 		{
 			matrix[i][j] = this->matrix[j][i];
 		}
 	}
 
 	return matrix;
+}
+
+
+template<typename Type>
+double MATRIX<Type>::SmallMatrixLaibnizDeterminant(const MATRIX<Type>& type)
+{
+	if (type.GetRows() == type.GetColumns() && type.GetRows() == 2)
+	{
+		return (type[0][0] * type[1][1] - type[0][1] * type[1][0]);
+	}
+
+	return 0.0;
 }
 
 #pragma endregion
@@ -1706,7 +1741,7 @@ auto main() -> int
 //MATRIX<size_t> m2(std::vector{ std::vector<size_t>{2,2, 2}, std::vector<size_t>{2,2,2}, std::vector<size_t>{2,2,2} });
 //m2.GetNthDegree(3).PrintMatrix();
 #pragma endregion
-MATRIX<size_t> m2(std::vector{ std::vector<size_t>{2,4, 6}, std::vector<size_t>{3,5,7} });
-auto transposed = m2.GetTransposed();
-transposed.PrintMatrix();
+MATRIX<size_t> m2(std::vector{ std::vector<size_t>{3, 8}, std::vector<size_t>{4, 6} });
+m2.PrintMatrix();
+std::cout << MATRIX<int>::SmallMatrixLaibnizDeterminant(m2);
 }
