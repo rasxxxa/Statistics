@@ -108,6 +108,8 @@ public:
 
 	MATRIX GetTransposed() const;
 	static double SmallMatrixLaibnizDeterminant(const MATRIX& type);
+	static double CalculateAndDivideMatrices(const MATRIX& type);
+	MATRIX CreateMatrixWithoutColumn(size_t column) const;
 	inline void SetColumnName(const std::string& columnName) { this->columnName = columnName; };
 	inline void SetRowName(const std::string& rowName) { this->rowName = rowName; };
 private:
@@ -1239,9 +1241,9 @@ MATRIX<Type>::MATRIX(const MATRIX& matrix)
 	for (size_t i{ 0u }; i < matrix.GetRows(); ++i)
 		this->matrix[i].resize(matrix.GetColumns());
 
-	for (size_t i = 0; i < matrix.GetRows(); ++i)
+	for (uint32_t i = 0; i < matrix.GetRows(); ++i)
 	{
-		for (size_t j = 0; j < matrix.GetColumns(); ++j)
+		for (uint32_t j = 0; j < matrix.GetColumns(); ++j)
 		{
 			this->matrix[i][j] = matrix[i][j];
 		}
@@ -1515,10 +1517,10 @@ double MATRIX<Type>::GetDeterminant() const
 
 	double determinant = 0.0;
 
-	if (GetRow() <= 4)
+	if (GetRows() <= 4)
 	{
 		// Do laibniz for small matrices. For bigger matrices use LU decomposition or Gauss 
-
+		return CalculateAndDivideMatrices(this->matrix);
 	}
 	else
 	{
@@ -1602,6 +1604,49 @@ double MATRIX<Type>::SmallMatrixLaibnizDeterminant(const MATRIX<Type>& type)
 
 	return 0.0;
 }
+
+template<typename Type>
+double MATRIX<Type>::CalculateAndDivideMatrices(const MATRIX& type)
+{
+	if (type.GetRows() == 2)
+		return SmallMatrixLaibnizDeterminant(type);
+
+	int sign = 1;
+	double result = 0.0;
+	for (uint32_t j{}; j < type.GetColumns(); j++)
+	{
+		result += sign * (type[0][j] * CalculateAndDivideMatrices(type.CreateMatrixWithoutColumn(j)));
+		sign *= -1;
+	}
+
+	return result;
+}
+
+template<typename Type>
+MATRIX<Type> MATRIX<Type>::CreateMatrixWithoutColumn(size_t column) const
+{
+	MATRIX<Type> result(GetRows() - 1, GetColumns() - 1);
+	size_t resultPtrI{}, resultPtrJ{};
+	for (uint32_t i{}; i < GetRows(); ++i)
+	{
+		if (i == 0)
+			continue;
+
+		resultPtrJ = 0u;
+		for (uint32_t j{}; j < GetColumns(); ++j)
+		{
+			if (j == column)
+				continue;
+
+			result[resultPtrI][resultPtrJ++] = this->matrix[i][j];
+		}
+		resultPtrI++;
+	}
+
+	return result;
+}
+
+
 
 #pragma endregion
 using namespace statistics;
@@ -1739,9 +1784,14 @@ auto main() -> int
 //auto m3(m1* m2);
 ////m3.PrintMatrix();
 //MATRIX<size_t> m2(std::vector{ std::vector<size_t>{2,2, 2}, std::vector<size_t>{2,2,2}, std::vector<size_t>{2,2,2} });
-//m2.GetNthDegree(3).PrintMatrix();
+////m2.GetNthDegree(3).PrintMatrix();
+//MATRIX<size_t> m2(std::vector{ std::vector<size_t>{3, 8}, std::vector<size_t>{4, 6} });
+//m2.PrintMatrix();
+//std::cout << MATRIX<int>::SmallMatrixLaibnizDeterminant(m2);
 #pragma endregion
-MATRIX<size_t> m2(std::vector{ std::vector<size_t>{3, 8}, std::vector<size_t>{4, 6} });
+MATRIX<int> m2(std::vector{ std::vector<int>{4,3,2, 2}, std::vector<int>{0,1,-3, 3}, std::vector<int>{0,-1,3, 3}, 
+	std::vector<int>{0,3,1,1} });
+//auto s2 = m2.CreateMatrixWithoutColumn(1);
 m2.PrintMatrix();
-std::cout << MATRIX<int>::SmallMatrixLaibnizDeterminant(m2);
+std::cout << m2.GetDeterminant();
 }
