@@ -1517,16 +1517,16 @@ double MATRIX<Type>::GetDeterminant() const
 
 	double determinant = 0.0;
 
-	if (GetRows() <= 4)
+	if (GetRows() <= 6)
 	{
 		// Do laibniz for small matrices. For bigger matrices use LU decomposition or Gauss 
-		return CalculateAndDivideMatrices(this->matrix);
+		determinant = CalculateAndDivideMatrices(this->matrix);
 	}
 	else
 	{
 
 	}
-
+	
 	return determinant;
 }
 
@@ -1788,10 +1788,21 @@ auto main() -> int
 //MATRIX<size_t> m2(std::vector{ std::vector<size_t>{3, 8}, std::vector<size_t>{4, 6} });
 //m2.PrintMatrix();
 //std::cout << MATRIX<int>::SmallMatrixLaibnizDeterminant(m2);
-#pragma endregion
-MATRIX<int> m2(std::vector{ std::vector<int>{4,3,2, 2}, std::vector<int>{0,1,-3, 3}, std::vector<int>{0,-1,3, 3}, 
-	std::vector<int>{0,3,1,1} });
+//MATRIX<int> m2(std::vector{ std::vector<int>{4,3,2, 2}, std::vector<int>{0,1,-3, 3}, std::vector<int>{0,-1,3, 3}, 
+//	std::vector<int>{0,3,1,1} });
 //auto s2 = m2.CreateMatrixWithoutColumn(1);
-m2.PrintMatrix();
-std::cout << m2.GetDeterminant();
+//m2.PrintMatrix();
+//std::cout << m2.GetDeterminant();
+#pragma endregion
+MATRIX<int64_t> test(6, 6);
+for (uint32_t i{}; i < test.GetColumns(); ++i)
+{
+	for (uint32_t j{}; j < test.GetRows(); ++j)
+	{
+		test[i][j] = statistics::random.GetUniformInt(-200, 200);
+	}
+}
+
+test.PrintMatrix();
+std::cout << test.GetDeterminant();
 }
