@@ -104,9 +104,10 @@ public:
 
 	void PrintMatrix() const;
 
+	MATRIX GetTransposed() const;
+
 	inline void SetColumnName(const std::string& columnName) { this->columnName = columnName; };
 	inline void SetRowName(const std::string& rowName) { this->rowName = rowName; };
-
 private:
 	std::vector<VECTOR> matrix;
 	std::string columnName = "column";
@@ -1552,6 +1553,21 @@ void MATRIX<Type>::PrintMatrix() const
 	}
 }
 
+template<typename Type>
+MATRIX<Type> MATRIX<Type>::GetTransposed() const
+{
+	MATRIX<Type> matrix(GetColumns(), GetRows());
+	for (uint32_t i{}; i < GetColumns(); ++i)
+	{
+		for (uin32_t j{}; j < GetRows(); ++j)
+		{
+			matrix[i][j] = this->matrix[j][i];
+		}
+	}
+
+	return matrix;
+}
+
 #pragma endregion
 using namespace statistics;
 auto main() -> int
@@ -1690,4 +1706,7 @@ auto main() -> int
 //MATRIX<size_t> m2(std::vector{ std::vector<size_t>{2,2, 2}, std::vector<size_t>{2,2,2}, std::vector<size_t>{2,2,2} });
 //m2.GetNthDegree(3).PrintMatrix();
 #pragma endregion
+MATRIX<size_t> m2(std::vector{ std::vector<size_t>{2,4, 6}, std::vector<size_t>{3,5,7} });
+auto transposed = m2.GetTransposed();
+transposed.PrintMatrix();
 }
