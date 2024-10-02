@@ -80,6 +80,7 @@ public:
 	MATRIX operator-() const;
 
 	MATRIX GetNthDegree(size_t degree);
+	void SwapRows(uint32_t r1, uint32_t r2);
 
 	friend MATRIX operator+(const MATRIX& left, const MATRIX& right);
 	friend MATRIX operator-(const MATRIX& left, const MATRIX& right);
@@ -1347,6 +1348,12 @@ MATRIX<Type> MATRIX<Type>::GetNthDegree(size_t degree)
 }
 
 template <typename Type>
+void MATRIX<Type>::SwapRows(uint32_t r1, uint32_t r2)
+{
+	std::swap(matrix[r1], matrix[r2]);
+}
+
+template <typename Type>
 MATRIX<Type> operator+(const MATRIX<Type>& left, const MATRIX<Type>& right)
 {
 	MATRIX<Type> newMatrix(left.matrix.size(), left.matrix[0].size());
@@ -1649,6 +1656,10 @@ double MATRIX<Type>::CalculateThroughLUDecomposition(const MATRIX& type)
 	{
 		for (uint32_t row{ pivot + 1 }; row < type.GetRows(); ++row)
 		{
+			if (upperTriangle[pivot][pivot])
+			{
+				
+			}
 			double difference = upperTriangle[row][pivot] / upperTriangle[pivot][pivot];
 			lowerTriangle[row][pivot] = difference;
 			auto rowC = upperTriangle.GetRow(pivot);
@@ -1854,5 +1865,7 @@ MATRIX<int> m2(std::vector{ std::vector<int>{4,3,2, 2}, std::vector<int>{0,1,-3,
 	std::vector<int>{0,3,1,1} });
 m2.PrintMatrix();
 
-MATRIX<int>::CalculateThroughLUDecomposition(m2);
+//MATRIX<int>::CalculateThroughLUDecomposition(m2);
+m2.SwapRows(0, 1);
+m2.PrintMatrix();
 }
