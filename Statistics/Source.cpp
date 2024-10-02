@@ -1661,7 +1661,6 @@ double MATRIX<Type>::CalculateThroughLUDecomposition(const MATRIX& type)
 	// Implement algorithm to return LU matrix where A = LU
 
 	MATRIX<double> upperTriangle(type);
-	MATRIX<double> lowerTriangle(type.GetRows());
 
 	size_t inversion = 0u;
 
@@ -1695,7 +1694,6 @@ double MATRIX<Type>::CalculateThroughLUDecomposition(const MATRIX& type)
 		for (uint32_t row{ pivot + 1 }; row < type.GetRows(); ++row)
 		{
 			double difference = upperTriangle[row][pivot] / upperTriangle[pivot][pivot];
-			lowerTriangle[row][pivot] = difference;
 			auto rowC = upperTriangle.GetRow(pivot);
 			std::ranges::for_each(rowC, [difference](auto& element) {element *= difference; });
 			for (size_t i{}; i < std::size(rowC); ++i)
