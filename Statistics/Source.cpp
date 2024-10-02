@@ -81,6 +81,7 @@ public:
 
 	MATRIX GetNthDegree(size_t degree);
 	void SwapRows(uint32_t r1, uint32_t r2);
+	void SwapColumns(uint32_t c1, uint32_t c2);
 
 	friend MATRIX operator+(const MATRIX& left, const MATRIX& right);
 	friend MATRIX operator-(const MATRIX& left, const MATRIX& right);
@@ -112,6 +113,9 @@ public:
 	static double SmallMatrixLaibnizDeterminant(const MATRIX& type);
 	static double CalculateAndDivideMatrices(const MATRIX& type);
 	static double CalculateThroughLUDecomposition(const MATRIX& type);
+	using LU = std::pair<MATRIX, MATRIX>;
+
+	static LU GetLUFactorisedMatrix(const MATRIX& matrix);
 	MATRIX CreateMatrixWithoutColumn(size_t column) const;
 	inline void SetColumnName(const std::string& columnName) { this->columnName = columnName; };
 	inline void SetRowName(const std::string& rowName) { this->rowName = rowName; };
@@ -1362,6 +1366,15 @@ void MATRIX<Type>::SwapRows(uint32_t r1, uint32_t r2)
 }
 
 template <typename Type>
+void MATRIX<Type>::SwapColumns(uint32_t c1, uint32_t c2)
+{
+	for (uint32_t row{}; row < GetRows(); ++row)
+	{
+		std::swap(matrix[row][c1], matrix[row][c2]);
+	}
+}
+
+template <typename Type>
 MATRIX<Type> operator+(const MATRIX<Type>& left, const MATRIX<Type>& right)
 {
 	MATRIX<Type> newMatrix(left.matrix.size(), left.matrix[0].size());
@@ -1711,6 +1724,59 @@ double MATRIX<Type>::CalculateThroughLUDecomposition(const MATRIX& type)
 	return result * std::pow(-1, inversion);
 }
 
+template <typename Type>
+MATRIX<Type>::LU MATRIX<Type>::GetLUFactorisedMatrix(const MATRIX& matrix)
+{
+	MATRIX<Type> lower(matrix.GetRows());
+	MATRIX<Type> upper(matrix);
+
+	for (uint32_t pivot{ 0 }; pivot < matrix.GetRows() - 1; ++pivot)
+	{
+		if (CompareDouble(upper[pivot][pivot], 0.0))
+		{
+			// Do swapping
+			double max = std::numeric_limits<double>::min();
+			int newColumn = -1;
+			for (uint32_t pivot2 = pivot + 1; pivot2 < matrix.GetRows(); ++pivot2)
+			{
+				if (const auto newVal = upper[pivot2][pivot]; !CompareDouble(newVal, 0.0) && newVal > max)
+				{
+					max = newVal;
+					newColumn = static_cast<int>(pivot2);
+				}
+			}
+
+			if (newColumn != -1)
+			{
+				// TODO:
+				upper.SwapRows(pivot, static_cast<uint32_t>(newColumn));
+				MATRIX<Type> identity(upper.GetRows());
+				identity.SwapRows(pivot, static_cast<uint32_t>(newColumn));
+				lower = identity * lower;
+			}
+			else
+			{
+				throw std::runtime_error("Singular matrix");
+			}
+		}
+
+		for (uint32_t row{ pivot + 1 }; row < matrix.GetRows(); ++row)
+		{
+			double difference = upper[row][pivot] / upper[pivot][pivot];
+			lower[row][pivot] = difference;
+			auto rowC = upper.GetRow(pivot);
+			std::ranges::for_each(rowC, [difference](auto& element) {element *= difference; });
+			for (size_t i{}; i < std::size(rowC); ++i)
+			{
+				upper[row][i] -= rowC[i];
+			}
+		}
+	}
+
+
+	return std::make_pair(lower, upper);
+}
+
 template<typename Type>
 MATRIX<Type> MATRIX<Type>::CreateMatrixWithoutColumn(size_t column) const
 {
@@ -1896,9 +1962,23 @@ auto main() -> int
 //std::cout << test.GetDeterminant();
 MATRIX<int> m2(std::vector{ std::vector<int>{4,3,2, 2}, std::vector<int>{0,1,-3, 3}, std::vector<int>{0,-1,3, 3}, 
 	std::vector<int>{0,3,1,1} });
-//m2.PrintMatrix();
 
-std::cout << MATRIX<int>::CalculateThroughLUDecomposition(m2);
-m2.SwapRows(0, 1);
+//MATRIX<int> m3(std::vector{ std::vector<int>{4,3,2, 2}, std::vector<int>{0,1,-3, 3}, std::vector<int>{0,-1,3, 3},
+//std::vector<int>{0,3,1,1} });
 //m2.PrintMatrix();
+//
+//std::cout << MATRIX<int>::CalculateThroughLUDecomposition(m2);
+//m2.SwapRows(0, 1);
+//m2.PrintMatrix();
+//MATRIX<int> matrix(4);
+////matrix.SwapRows(0, 1);
+////m2 = m2 * matrix;
+//matrix.SwapColumns(0, 1);
+//matrix.PrintMatrix();
+m2.PrintMatrix();
+
+auto [L, U] = MATRIX<int>::GetLUFactorisedMatrix(m2);
+L.PrintMatrix();
+U.PrintMatrix();
+(L * U).PrintMatrix();
 }
