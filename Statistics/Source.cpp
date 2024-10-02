@@ -121,6 +121,14 @@ private:
 	std::string rowName = "row";
 };
 
+namespace
+{
+	bool CompareDouble(const double first, const double second)
+	{
+		return std::abs(first - second) <= std::numeric_limits<double>::epsilon();
+	}
+}
+
 namespace statistics
 {
 	template <typename VecType>
@@ -1603,16 +1611,16 @@ void MATRIX<Type>::PrintMatrix() const
 template<typename Type>
 MATRIX<Type> MATRIX<Type>::GetTransposed() const
 {
-	MATRIX<Type> matrix(GetColumns(), GetRows());
+	MATRIX<Type> transposed(GetColumns(), GetRows());
 	for (uint32_t i{}; i < GetColumns(); ++i)
 	{
 		for (uint32_t j{}; j < GetRows(); ++j)
 		{
-			matrix[i][j] = this->matrix[j][i];
+			transposed[i][j] = this->matrix[j][i];
 		}
 	}
 
-	return matrix;
+	return transposed;
 }
 
 
@@ -1647,19 +1655,45 @@ double MATRIX<Type>::CalculateAndDivideMatrices(const MATRIX& type)
 template<typename Type>
 double MATRIX<Type>::CalculateThroughLUDecomposition(const MATRIX& type)
 {
-	double result{};
+	double result{1.0};
+
+	// This will use only L calculation from LU factorisation.
+	// Implement algorithm to return LU matrix where A = LU
 
 	MATRIX<double> upperTriangle(type);
 	MATRIX<double> lowerTriangle(type.GetRows());
 
+	size_t inversion = 0u;
+
 	for (uint32_t pivot{0}; pivot < type.GetRows() - 1; ++pivot)
 	{
+		if (CompareDouble(upperTriangle[pivot][pivot], 0.0))
+		{
+			// Do swapping
+			double max = std::numeric_limits<double>::min();
+			int newColumn = -1;
+			for (uint32_t pivot2 = pivot + 1; pivot2 < type.GetRows(); ++pivot2)
+			{
+				if (const auto newVal = upperTriangle[pivot2][pivot]; !CompareDouble(newVal, 0.0) && newVal > max)
+				{
+					max = newVal;
+					newColumn = static_cast<int>(pivot2);
+				}
+			}
+
+			if (newColumn != -1)
+			{
+				inversion++;
+				upperTriangle.SwapRows(pivot, static_cast<uint32_t>(newColumn));
+			}
+			else
+			{
+				return 0.0;
+			}
+		}
+
 		for (uint32_t row{ pivot + 1 }; row < type.GetRows(); ++row)
 		{
-			if (upperTriangle[pivot][pivot])
-			{
-				
-			}
 			double difference = upperTriangle[row][pivot] / upperTriangle[pivot][pivot];
 			lowerTriangle[row][pivot] = difference;
 			auto rowC = upperTriangle.GetRow(pivot);
@@ -1668,14 +1702,15 @@ double MATRIX<Type>::CalculateThroughLUDecomposition(const MATRIX& type)
 			{
 				upperTriangle[row][i] -= rowC[i];
 			}
-			std::cout << "UPPER \n";
-			upperTriangle.PrintMatrix();
-			std::cout << "LOWER \n";
-			lowerTriangle.PrintMatrix();
 		}
 	}
 
-	return result;
+	for (uint32_t i{}; i < upperTriangle.GetRows(); ++i)
+	{
+		result *= upperTriangle[i][i];
+	}
+
+	return result * std::pow(-1, inversion);
 }
 
 template<typename Type>
@@ -1863,9 +1898,9 @@ auto main() -> int
 //std::cout << test.GetDeterminant();
 MATRIX<int> m2(std::vector{ std::vector<int>{4,3,2, 2}, std::vector<int>{0,1,-3, 3}, std::vector<int>{0,-1,3, 3}, 
 	std::vector<int>{0,3,1,1} });
-m2.PrintMatrix();
+//m2.PrintMatrix();
 
-//MATRIX<int>::CalculateThroughLUDecomposition(m2);
+std::cout << MATRIX<int>::CalculateThroughLUDecomposition(m2);
 m2.SwapRows(0, 1);
-m2.PrintMatrix();
+//m2.PrintMatrix();
 }
