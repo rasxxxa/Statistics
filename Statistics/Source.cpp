@@ -264,7 +264,7 @@ namespace statistics
 		const auto maxFound = std::ranges::max(std::ranges::views::values(mode_elems));
 		for (const auto& [key, value] : mode_elems)
 			if (value == maxFound)
-				modes.push_back(key);
+				modes.emplace_back(key);
 
 		return modes;
 	}
@@ -393,10 +393,10 @@ namespace statistics
 		std::vector<size_t> limitsVec(std::size(limits) + 1);
 		std::deque<typename Limits::value_type> limitsFull;
 		for (const auto& l : limits)
-			limitsFull.push_back(l);
+			limitsFull.emplace_back(l);
 
 		limitsFull.push_front(std::numeric_limits<typename Limits::value_type>::min());
-		limitsFull.push_back(std::numeric_limits<typename Limits::value_type>::max());
+		limitsFull.emplace_back(std::numeric_limits<typename Limits::value_type>::max());
 
 		for (const auto& elem : data)
 		{
@@ -501,12 +501,12 @@ namespace statistics
 		const auto numElems = static_cast<size_t>(std::sqrt(size));
 		const float step = rangeVec / numElems;
 		float beg = min(vec);
-		bins.push_back(beg);
+		bins.emplace_back(beg);
 		float end = max(vec);
 		while (beg < end)
 		{
 			beg += step;
-			bins.push_back(beg);
+			bins.emplace_back(beg);
 		}
 		return bins;
 	}
@@ -1209,8 +1209,8 @@ void Simulation2(size_t sample)
 		auto result = static_cast<size_t>(std::sqrt(std::pow(xRand, 2) + std::pow(yRand, 2)));
 		if (result <= 24)
 		{
-			x.push_back(static_cast<long long>(xRand));
-			y.push_back(static_cast<long long>(yRand));
+			x.emplace_back(static_cast<long long>(xRand));
+			y.emplace_back(static_cast<long long>(yRand));
 		}
 	}
 
@@ -1404,7 +1404,7 @@ MATRIX<Type> operator*(const MATRIX<Type>& left, const MATRIX<Type>& right)
 template <typename Type>
 MATRIX<Type> operator*(double left, const MATRIX<Type>& right)
 {
-	MATRIX<Type> newMatrix(left.matrix.size(), left.matrix[0].size());
+	MATRIX<Type> newMatrix(right.GetRows(), right.GetColumns());
 
 	for (size_t i{ 0u }; i < newMatrix.size(); ++i)
 		for (size_t j{ 0u }; j < newMatrix[i].size(); ++i)
@@ -1470,8 +1470,8 @@ MATRIX<Type>& MATRIX<Type>::operator*=(const MATRIX<Type>& other)
 template<typename Type>
 MATRIX<Type>& MATRIX<Type>::operator*=(double other)
 {
-	for (size_t i{ 0u }; i < other.GetRows(); ++i)
-		for (size_t j{ 0u }; j < other.GetColumns(); ++i)
+	for (size_t i{ 0u }; i < GetRows(); ++i)
+		for (size_t j{ 0u }; j < GetColumns(); ++i)
 			matrix[i][j] *= other;
 
 	return *this;
@@ -1480,8 +1480,8 @@ MATRIX<Type>& MATRIX<Type>::operator*=(double other)
 template<typename Type>
 MATRIX<Type>& MATRIX<Type>::operator/=(double other)
 {
-	for (size_t i{ 0u }; i < other.GetRows(); ++i)
-		for (size_t j{ 0u }; j < other.GetColumns(); ++i)
+	for (size_t i{ 0u }; i < GetRows(); ++i)
+		for (size_t j{ 0u }; j < GetColumns(); ++i)
 			matrix[i][j] /= other;
 
 	return *this;
@@ -1490,8 +1490,8 @@ MATRIX<Type>& MATRIX<Type>::operator/=(double other)
 template<typename Type>
 MATRIX<Type>& MATRIX<Type>::operator-=(double other)
 {
-	for (size_t i{ 0u }; i < other.GetRows(); ++i)
-		for (size_t j{ 0u }; j < other.GetColumns(); ++i)
+	for (size_t i{ 0u }; i < GetRows(); ++i)
+		for (size_t j{ 0u }; j < GetColumns(); ++i)
 			matrix[i][j] -= other;
 
 	return *this;
@@ -1500,8 +1500,8 @@ MATRIX<Type>& MATRIX<Type>::operator-=(double other)
 template<typename Type>
 MATRIX<Type>& MATRIX<Type>::operator+=(double other)
 {
-	for (size_t i{ 0u }; i < other.GetRows(); ++i)
-		for (size_t j{ 0u }; j < other.GetColumns(); ++i)
+	for (size_t i{ 0u }; i < GetRows(); ++i)
+		for (size_t j{ 0u }; j < GetColumns(); ++i)
 			matrix[i][j] += other;
 
 	return *this;
@@ -1516,7 +1516,7 @@ typename MATRIX<Type>::VECTOR MATRIX<Type>::GetColumn(size_t index) const
 	std::vector<Type> result;
 	for (size_t i{ 0u }; i < matrix.size(); ++i)
 	{
-		result.push_back(matrix[i][index]);
+		result.emplace_back(matrix[i][index]);
 	}
 
 	return result;
@@ -1580,7 +1580,7 @@ void MATRIX<Type>::PrintMatrix() const
 		print_break(widths);
 		
 		std::vector<std::string> columns;
-		columns.push_back(" ");
+		columns.emplace_back(" ");
 		for (size_t i = 0; i < matrix[0].size(); ++i)
 		{
 			columns.emplace_back(columnName + " " + std::to_string(i));
@@ -1748,7 +1748,7 @@ auto main() -> int
 	std::vector<std::string> d;
 	for (const auto& vv : b)
 	{
-		d.push_back(std::to_string(vv));
+		d.emplace_back(std::to_string(vv));
 	}
 
 	std::vector<float> borders{ 20.0f, 22.0f, 30.0f };
